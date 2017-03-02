@@ -70,7 +70,6 @@ This pipeline performs de novo assembly with Trinity, which is a de novo assembl
 ## Filling in the config file ##
 
 ### SECTION 1: SPECIFY WHICH TASKS YOU WANT TO DO HERE
-
 You may elect to perform trimming, mapping, SNP calling, de novo assembly and run popoolation using this pipeline. To enable these analyses, simply type "True" (make sure to use a capital T) after the = each option. Specifics are specified below: 
 
 #### self.trim = <True> or <False>
@@ -104,6 +103,7 @@ Phred-based quality score threshold to use during trimming. If you would like to
 
 
 
+
 #### SPECIFY REFERENCE SEQEUNCE:
 One important note here is that this pipeline is meant to run with a single reference sequence file. If you want to specify multiple gene segments, simply put all of them into the same fasta file. The fasta file must end in .fasta or .fa. 
 
@@ -115,6 +115,7 @@ If you are mapping everything to the same reference sequence, then you have to s
 
 #### self.reference_sequence_name = <name>
 Bowtie2 requires the user to input a "base name" for the reference sequence. For this, specify the actual name of the reference sequence, NOT the path. Ex: CA04_HA.fasta
+
 
 
 #### SET SNP CALLING PARAMETERS:
@@ -132,6 +133,7 @@ This will set the minimum quality score required at a base in order to perform v
 
 #### self.snp_frequency = <decimal>
 Variants that are present at a frequency less than that set by <decimal> will not be called. <decimal> values should range from 0 to 1, with a value of 0.01 specifying that SNPs should be called at a 1% frequency cutoff. 
+
 
 
 ### Output
@@ -178,6 +180,7 @@ a parameters file containing a summary of the commands you specified
 
 
 
-### Who do I talk to? ###
+
+### Questions and comments ###
 
 Louise Moncla lhmoncla@gmail.com
