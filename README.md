@@ -8,7 +8,10 @@ This repository contains the TCF Illumina sequence data analysis pipeline. This 
 
 ## How do I get set up? ##
 
-This pipeline is written in Python 2.7. Simply download the python file and configuration file and run them. 
+This pipeline is written in Python 2.7. To use, download the python file and config file, fill out the config file, and add to your path. 
+
+## Basic usage: ##
+illumina_pipeline_fastq_to_snps.py config
 
 ## Dependencies ##
 
@@ -57,9 +60,6 @@ Popoolation is used for calculating pi, piN and piS across full genes, genomes o
 
 ### Contribution guidelines ###
 
-* Writing tests
-* Code review
-* Other guidelines
 
 ### Who do I talk to? ###
 
