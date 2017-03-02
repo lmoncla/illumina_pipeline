@@ -56,7 +56,7 @@ Popoolation is used for calculating pi, piN and piS across full genes, genomes o
 
 
 ## Basic usage: ##
-illumina_pipeline_fastq_to_snps.py config
+`illumina_pipeline_fastq_to_snps.py config`
 
 #### input files
 As this is currently written, the script will run on all of the fastq files that are in your current directory. These files should all be standard fastq files and need to end in .fastq. The program will automatically combine forward and reverse reads that derive from the same sample together into the same folder. The pipeline has been written to allow you to either map all samples to the same reference sequence (as you would want to do for any sort of experimental evolution/infection study) or to map each sample to a unique reference (as you might want to do for clinical samples). The main difference that you need to worry for specifying between these 2 options is in the reference sequence section of the config file (see: Filling in the config file below). 
@@ -72,19 +72,19 @@ This pipeline performs de novo assembly with Trinity, which is a de novo assembl
 ### SECTION 1: SPECIFY WHICH TASKS YOU WANT TO DO HERE
 You may elect to perform trimming, mapping, SNP calling, de novo assembly and run popoolation using this pipeline. To enable these analyses, simply type "True" (make sure to use a capital T) after the = each option. Specifics are specified below: 
 
-#### self.trim = <True> or <False>
+#### self.trim = `True` or `False`
 Use Trimmomatic to trim the ends of your reads. This must be done for all raw fastq files. If set to True, fill in the parameters under the "SET TRIMMING PARAMETERS" section. 
 
-#### self.map = <True> or <False>
+#### self.map =`True` or `False`
 Use bowtie2 to map to a reference sequence. If set to True, fill in the "SPECIFY REFERENCE SEQUENCE" section. 
 
-#### self.call_snps = <True> or <False> 
+#### self.call_snps = `True` or `False` 
 Use either Varscan or Lofreq to call SNPs after mapping to a reference sequence. You must map to a reference before calling SNPs, as the input file for SNP calling is output file for mapping. If set to True, fill in the "SET SNP CALLING PARAMETERS" section of the config file. All SNP calls will be output to a folder called "snp_calls".
 
-#### self.de_novo_assembly = <True> or <False>
+#### self.de_novo_assembly = `True` or `False`
 Use Trinity to de novo assemble all trimmed fastq files. All results from Trinity will be output to a folder called "trinity_output". Within that folder, output contigs will be written to Trinity.fasta. Those contigs will be piped to the BLAST server and the top 10 BLAST hits for each contig are reported in the output file "Trinity_BLAST_result.txt". 
 
-#### self.de_novo_assemble_mapped_reads = <True> or <False>
+#### self.de_novo_assemble_mapped_reads = `True` or `False`
 Extract all reads that were mapped to the reference and use Trinity to perform a de novo assembly on those reads. All results from Trinity will be output to a folder called "trinity_de_novo_assembly_mapped_reads_only". Within that folder, output contigs will be written to Trinity.fasta. Those contigs will be piped to the BLAST server and the top 10 BLAST hits for each contig are reported in the output file "Trinity_BLAST_result.txt." 
 
 
