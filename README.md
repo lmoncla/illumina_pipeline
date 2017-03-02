@@ -137,24 +137,47 @@ Variants that are present at a frequency less than that set by <decimal> will no
 ### Output
 After this has been run, a folder will be made for each sample, which will contain the original fastq files, trimmed fastq files, mapping files in sam and bam format, variant calls in vcf format, and a parameters file. Details are below:
 
-sample.fastq: the original fastq files
+#### sample.fastq
+the original fastq files
 
-sample.trimmed.fastq: trimmed fastq files 
+#### sample.trimmed.fastq
+trimmed fastq files 
 
-sample.sam: trimmed fastq files that were mapped to the reference sequence
+#### sample.sam
+trimmed fastq files that were mapped to the reference sequence
 
-sample.bam: trimmed fastq files that were mapped to the reference sequence, but in bam format
+#### sample.bam
+trimmed fastq files that were mapped to the reference sequence, but in bam format
 
-sample.sorted.bam: trimmed fastq files that were mapped to the reference sequence, but in sorted bam format (necessary for SNP calling)
+#### sample.sorted.bam
+trimmed fastq files that were mapped to the reference sequence, but in sorted bam format (necessary for SNP calling)
 
-sample.vcf: unfiltered lofreq variant calls. These have NOT been filtered to account for minimum quality, coverage, or SNP frequency. 
+#### sample.lofreq.(frequency_cutoff).vcf
+unfiltered lofreq variant calls. These have NOT been filtered to account for minimum quality, coverage, or SNP frequency. Here, (frequency_cutoff) specifies the minimum frequency a variant had to be present to be called that was applied to filtering. 
 
-sample.filtered.vcf: filtered variant calls, filtered with the parameters you specified in the config file.
+#### sample.lofreq.filtered.(frequency_cutoff).vcf
+filtered variant calls, filtered with the parameters you specified in the config file.
+
+#### sample.lofreq.annotated.(frequency_cutoff).vcf
+filtered lofreq variant calls.filtered with the parameters you specified in the config file and annotated by snpEff to include information about amino acid changes to coding regions. 
+
+#### sample.varscan.snps.(frequency_cutoff).vcf
+variants called by varscan according to the parameters you specified in the config file. Not yet annotated. 
+
+#### sample.varscan.annotated.snps.(frequency_cutoff).vcf
+variants called by varscan according to the parameters you specified in the config file and annotated by snpEff to include information about amino acid changes to coding regions. 
+
+#### trinity_output
+A folder containing the output files for Trinity when run using all reads as input. The output contigs are in a file called Trinity.fasta and the restuls from sending those contigs to BLAST are contained in Trinity_BLAST_result.txt.
+
+#### trinity_de_novo_assembly_mapped_reads_only
+A folder that contains the output files for Trinity when run using only mapped reads as input. The output contigs are in a file called Trinity.fasta and the restuls from sending those contigs to BLAST are contained in Trinity_BLAST_result.txt.
  
-sample.params: a parameters file containing a summary of the commands you specified
+#### sample.params
+a parameters file containing a summary of the commands you specified
 
 
 
 ### Who do I talk to? ###
 
-* Louise Moncla lhmoncla@gmail.com
+Louise Moncla lhmoncla@gmail.com
