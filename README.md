@@ -15,7 +15,7 @@ illumina_pipeline_fastq_to_snps.py config
 
 ## Dependencies ##
 
-This pipeline is a wrapper that runs a series of publicly available and free softwares. It relies on the following dependencies: 
+This pipeline is a wrapper that runs a series of publicly available and free softwares. All of these softwares are already installed in /usr/local/bin on the Coltrane server and are ready to use if the analyses are run on any part of your account on Coltrane. It relies on the following dependencies: 
 
 #### Trimmomatic
 http://www.usadellab.org/cms/?page=trimmomatic
