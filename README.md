@@ -103,8 +103,8 @@ Trimmomatic performs read end trimming by sliding along the read and calculating
 Phred-based quality score threshold to use during trimming. If you would like to use a Q30 threshold, you would specify 30. 30 is recommended. 
 
 
-#### SPECIFY REFERENCE SEQEUNCE:
 
+#### SPECIFY REFERENCE SEQEUNCE:
 One important note here is that this pipeline is meant to run with a single reference sequence file. If you want to specify multiple gene segments, simply put all of them into the same fasta file. The fasta file must end in .fasta or .fa. 
 
 #### self.use_different_reference_for_each_sample = <True> or <False>
@@ -116,8 +116,8 @@ If you are mapping everything to the same reference sequence, then you have to s
 #### self.reference_sequence_name = <name>
 Bowtie2 requires the user to input a "base name" for the reference sequence. For this, specify the actual name of the reference sequence, NOT the path. Ex: CA04_HA.fasta
 
-#### SET SNP CALLING PARAMETERS:
 
+#### SET SNP CALLING PARAMETERS:
 One important note here is that if you would like SNPs to be annotated as to whether they cause a coding region change, then you need to put together gtf files and configure new genomes in snpEff. Instructions for how to do that are at the end of this document. 
 
 #### self.use_lofreq = <True> or <False>
@@ -138,12 +138,19 @@ Variants that are present at a frequency less than that set by <decimal> will no
 After this has been run, a folder will be made for each sample, which will contain the original fastq files, trimmed fastq files, mapping files in sam and bam format, variant calls in vcf format, and a parameters file. Details are below:
 
 sample.fastq: the original fastq files
+
 sample.trimmed.fastq: trimmed fastq files 
+
 sample.sam: trimmed fastq files that were mapped to the reference sequence
+
 sample.bam: trimmed fastq files that were mapped to the reference sequence, but in bam format
+
 sample.sorted.bam: trimmed fastq files that were mapped to the reference sequence, but in sorted bam format (necessary for SNP calling)
+
 sample.vcf: unfiltered lofreq variant calls. These have NOT been filtered to account for minimum quality, coverage, or SNP frequency. 
-sample.filtered.vcf: filtered variant calls, filtered with the parameters you specified in the config file. 
+
+sample.filtered.vcf: filtered variant calls, filtered with the parameters you specified in the config file.
+ 
 sample.params: a parameters file containing a summary of the commands you specified
 
 
