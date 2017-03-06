@@ -1,6 +1,4 @@
-# illumina_pipeline
-TCF lab pipeline for Illumina sequence data analysis
-=======
+# TCF lab pipeline for Illumina sequence data analysis
 
 # README #
 
@@ -101,7 +99,8 @@ After read trimming has been performed, discard reads that are shorter than inte
 Trimmomatic performs read end trimming by sliding along the read and calculating a running quality score in sliding windows. The width of those windows is specified by integer. 
 
 #### self.trim_qscore = `integer`
-=======
+Phred-based quality score threshold to use during trimming. If you would like to use a Q30 threshold, you would specify 30. 30 is recommended. 
+
 #### self.minlength = `integer` 
 After read trimming has been performed, discard reads that are shorter than `integer` length. Value must be an integer. I would recommend 100. 
 
@@ -116,13 +115,15 @@ Phred-based quality score threshold to use during trimming. If you would like to
 #### SPECIFY REFERENCE SEQEUNCE:
 One important note here is that this pipeline is meant to run with a single reference sequence file. If you want to specify multiple gene segments, simply put all of them into the same fasta file. The fasta file must end in .fasta or .fa. 
 
-#### self.use_different_reference_for_each_sample = True or False
+#### self.use_different_reference_for_each_sample = `True` or `False`
 Specify True to map all of the samples to the same reference sequence or False to map each sample to it's own reference. If specifying False, then you need to put the fasta reference file into the same folder as the trimmed fastqs. The easiest way to do this is to run the pipeline and do only Trimming, which will combine the forward and reverse fastq files and make folders with their specific names. Then just move the fasta reference files into the appropriate folder. 
 
-#### self.reference_sequence = path to reference sequence
+#### self.reference_sequence = `path to reference sequence`
 If you are mapping everything to the same reference sequence, then you have to specify the full path to the reference sequence you wish to use. The reference sequence should be in fasta format and can end in .fasta or .fa. Ex: User/Documents/CA04_HA.fa
 
-#### self.reference_sequence_name = name
+#### self.reference_sequence_name = `name`
+Bowtie2 requires the user to input a "base name" for the reference sequence. For this, specify the actual name of the reference sequence, NOT the path. Ex: CA04_HA.fasta
+
 =======
 #### SET SNP CALLING PARAMETERS:
 One important note here is that if you would like SNPs to be annotated as to whether they cause a coding region change, then you need to put together gtf files and configure new genomes in snpEff. Instructions for how to do that are at the end of this document. 
@@ -160,19 +161,19 @@ trimmed fastq files that were mapped to the reference sequence, but in bam forma
 #### sample.sorted.bam
 trimmed fastq files that were mapped to the reference sequence, but in sorted bam format (necessary for SNP calling)
 
-#### sample.lofreq.(frequency_cutoff).vcf
-unfiltered lofreq variant calls. These have NOT been filtered to account for minimum quality, coverage, or SNP frequency. Here, (frequency_cutoff) specifies the minimum frequency a variant had to be present to be called that was applied to filtering. 
+#### sample.lofreq.`snp_frequency`.vcf
+unfiltered lofreq variant calls. These have NOT been filtered to account for minimum quality, coverage, or SNP frequency. Here, `snp_frequency` specifies the minimum frequency a variant had to be present to be called that was applied to filtering. 
 
-#### sample.lofreq.filtered.(frequency_cutoff).vcf
+#### sample.lofreq.filtered.`snp_frequency`.vcf
 filtered variant calls, filtered with the parameters you specified in the config file.
 
-#### sample.lofreq.annotated.(frequency_cutoff).vcf
+#### sample.lofreq.annotated.`snp_frequency`.vcf
 filtered lofreq variant calls.filtered with the parameters you specified in the config file and annotated by snpEff to include information about amino acid changes to coding regions. 
 
-#### sample.varscan.snps.(frequency_cutoff).vcf
+#### sample.varscan.snps.`snp_frequency`.vcf
 variants called by varscan according to the parameters you specified in the config file. Not yet annotated. 
 
-#### sample.varscan.annotated.snps.(frequency_cutoff).vcf
+#### sample.varscan.annotated.snps.`snp_frequency`.vcf
 variants called by varscan according to the parameters you specified in the config file and annotated by snpEff to include information about amino acid changes to coding regions. 
 
 #### trinity_output
