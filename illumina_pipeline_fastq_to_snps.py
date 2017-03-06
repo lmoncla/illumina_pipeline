@@ -100,12 +100,16 @@ def call_SNPs():
 				print "now calling SNPs on %s using lofreq" % s
 				call("lofreq call -f {reference_sequence} -o {s}/{s}.lofreq.{snp_frequency}.vcf {s}/{s}.sorted.bam".format(s=s, snp_frequency=cfg.snp_frequency, reference_sequence=cfg.reference_sequence), shell=True)	
 				call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {s}/{s}.lofreq.{snp_frequency}.vcf -o {s}/{s}.filtered.{snp_frequency}.vcf".format(s=s, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True)
+				
+			if cfg.annotate_aa_changes == True:
 				call("java -jar /usr/local/bin/snpEff/snpEff.jar {snpEff_ref_name} {s}/{s}.lofreq.filtered.{snp_frequency}.vcf > {s}/{s}.lofreq.annotated.{snp_frequency}.vcf".format(snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True)
 
 			if cfg.use_varscan == True:
 				print "now calling SNPs on %s using varscan" % s
 				call("samtools mpileup -d1000000 {s}/{s}.sorted.bam > {s}/{s}.pileup -f {reference_sequence}".format(s=s, reference_sequence=cfg.reference_sequence), shell=True)
 				call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{s}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{s}.varscan.snps.{snp_frequency}.vcf".format(s=s,snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True)		
+				
+			if cfg.annotate_aa_changes == True:
 				call("java -jar /usr/local/bin/snpEff/snpEff.jar {snpEff_ref_name} {s}/{s}.varscan.snps.{snp_frequency}.vcf > {s}/{s}.varscan.snps.annotated.{snp_frequency}.vcf".format(snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True)
 	
 		
@@ -126,19 +130,23 @@ def call_SNPs():
 				print "now calling SNPs on %s using lofreq" % s
 				call("lofreq call -f {s}/{reference_sequence} -o {s}/{s}.lofreq.{snp_frequency}.vcf {s}/{s}.sorted.bam".format(s=s, snp_frequency=cfg.snp_frequency, reference_sequence=reference_sequence), shell=True)	
 				call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {s}/{s}.lofreq.{snp_frequency}.vcf -o {s}/{s}.lofreq.filtered.{snp_frequency}.vcf".format(s=s, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True)
+				
+			if cfg.annotate_aa_changes == True:
 				call("java -jar /usr/local/bin/snpEff/snpEff.jar {snpEff_ref_name} {s}/{s}.lofreq.filtered.{snp_frequency}.vcf > {s}/{s}.lofreq.annotated.{snp_frequency}.vcf".format(snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True)
 	
 			if cfg.use_varscan == True: 
 				print "now calling SNPs on %s using varscan" % s
 				call("samtools mpileup -d 1000000 {s}/{s}.sorted.bam > {s}/{s}.pileup -f {s}/{reference_sequence}".format(s=s, reference_sequence=reference_sequence), shell=True)
 				call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{s}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{s}.varscan.snps.{snp_frequency}.vcf".format(s=s,snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True)
+				
+			if cfg.annotate_aa_changes == True:
 				call("java -jar /usr/local/bin/snpEff/snpEff.jar {snpEff_ref_name} {s}/{s}.varscan.snps.{snp_frequency}.vcf > {s}/{s}.varscan.snps.annotated.{snp_frequency}.vcf".format(snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True)
 
 				
 		call("cd {s}; rm -rf snp_calls; mkdir snp_calls; for f in *.vcf; do mv $f snp_calls/$f; done".format(s=s), shell=True)
 		
-	if cfg.use_lofreq == True: 			
-		call("rm combined.{snp_frequency}.snps.txt; grep -r --include='*.lofreq.annotated.{snp_frequency}.vcf' . * >> combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
+	if cfg.use_lofreq == True and cfg.annotate_aa_changes == True: 			
+		call("rm combined.{snp_frequency}.snps.txt; grep -r --include='*.lofreq.annotated.{snp_frequency}.vcf' . * >> combined.lofreq.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
 		call("sed -i '' $'/#/d' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
 		call("sed -i '' $'s/\;/\t/g' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
 		call("sed -i '' $'s/\:/\t/g' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
@@ -146,7 +154,7 @@ def call_SNPs():
 		call("sed -i '' $'s/\.fastq.*\.vcf//g' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
 		
 	
-	if cfg.use_varscan == True: 
+	if cfg.use_varscan == True and cfg.annotate_aa_changes == True: 
 		call("rm combined.{snp_frequency}.snps.txt; grep -r --include='*.varscan.snps.annotated.{snp_frequency}.vcf' . * >> varscan.snps.{snp_frequency}.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
 		call("sed -i '' $'/Position/d' varscan.snps.{snp_frequency}.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
 		call("sed -i '' $'s/\:/\t/g' varscan.snps.{snp_frequency}.txt".format(snp_frequency=cfg.snp_frequency), shell=True)

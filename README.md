@@ -1,3 +1,4 @@
+ HEAD
 # README #
 
 This repository contains the TCF Illumina sequence data analysis pipeline. This pipeline handles going from raw fastq files that came off the MiSeq to generating variant calls and performing diversity analyses. 
@@ -72,19 +73,19 @@ This pipeline performs de novo assembly with Trinity, which is a de novo assembl
 ### SECTION 1: SPECIFY WHICH TASKS YOU WANT TO DO HERE
 You may elect to perform trimming, mapping, SNP calling, de novo assembly and run popoolation using this pipeline. To enable these analyses, simply type "True" (make sure to use a capital T) after the = each option. Specifics are specified below: 
 
-#### self.trim = <True> or <False>
+#### self.trim = True or False
 Use Trimmomatic to trim the ends of your reads. This must be done for all raw fastq files. If set to True, fill in the parameters under the "SET TRIMMING PARAMETERS" section. 
 
-#### self.map = <True> or <False>
+#### self.map = True or False
 Use bowtie2 to map to a reference sequence. If set to True, fill in the "SPECIFY REFERENCE SEQUENCE" section. 
 
-#### self.call_snps = <True> or <False> 
+#### self.call_snps = True or False 
 Use either Varscan or Lofreq to call SNPs after mapping to a reference sequence. You must map to a reference before calling SNPs, as the input file for SNP calling is output file for mapping. If set to True, fill in the "SET SNP CALLING PARAMETERS" section of the config file. All SNP calls will be output to a folder called "snp_calls".
 
-#### self.de_novo_assembly = <True> or <False>
+#### self.de_novo_assembly = True or False
 Use Trinity to de novo assemble all trimmed fastq files. All results from Trinity will be output to a folder called "trinity_output". Within that folder, output contigs will be written to Trinity.fasta. Those contigs will be piped to the BLAST server and the top 10 BLAST hits for each contig are reported in the output file "Trinity_BLAST_result.txt". 
 
-#### self.de_novo_assemble_mapped_reads = <True> or <False>
+#### self.de_novo_assemble_mapped_reads = True or False
 Extract all reads that were mapped to the reference and use Trinity to perform a de novo assembly on those reads. All results from Trinity will be output to a folder called "trinity_de_novo_assembly_mapped_reads_only". Within that folder, output contigs will be written to Trinity.fasta. Those contigs will be piped to the BLAST server and the top 10 BLAST hits for each contig are reported in the output file "Trinity_BLAST_result.txt." 
 
 
@@ -92,13 +93,13 @@ Extract all reads that were mapped to the reference and use Trinity to perform a
 ### SECTION 2 : SET/ALTER PARAMETERS 
 
 #### SET TRIMMING PARAMETERS:
-#### self.minlength = <integer> 
-After read trimming has been performed, discard reads that are shorter than <integer> length. Value must be an integer. I would recommend 100. 
+#### self.minlength = integer 
+After read trimming has been performed, discard reads that are shorter than integer length. Value must be an integer. I would recommend 100. 
 
-#### self.window_size = <integer>
-Trimmomatic performs read end trimming by sliding along the read and calculating a running quality score in sliding windows. The width of those windows is specified by <integer>. 
+#### self.window_size = integer
+Trimmomatic performs read end trimming by sliding along the read and calculating a running quality score in sliding windows. The width of those windows is specified by integer. 
 
-#### self.trim_qscore = <integer>
+#### self.trim_qscore = integer
 Phred-based quality score threshold to use during trimming. If you would like to use a Q30 threshold, you would specify 30. 30 is recommended. 
 
 
@@ -107,13 +108,13 @@ Phred-based quality score threshold to use during trimming. If you would like to
 #### SPECIFY REFERENCE SEQEUNCE:
 One important note here is that this pipeline is meant to run with a single reference sequence file. If you want to specify multiple gene segments, simply put all of them into the same fasta file. The fasta file must end in .fasta or .fa. 
 
-#### self.use_different_reference_for_each_sample = <True> or <False>
+#### self.use_different_reference_for_each_sample = True or False
 Specify True to map all of the samples to the same reference sequence or False to map each sample to it's own reference. If specifying False, then you need to put the fasta reference file into the same folder as the trimmed fastqs. The easiest way to do this is to run the pipeline and do only Trimming, which will combine the forward and reverse fastq files and make folders with their specific names. Then just move the fasta reference files into the appropriate folder. 
 
-#### self.reference_sequence = <path to reference sequence>
+#### self.reference_sequence = path to reference sequence
 If you are mapping everything to the same reference sequence, then you have to specify the full path to the reference sequence you wish to use. The reference sequence should be in fasta format and can end in .fasta or .fa. Ex: User/Documents/CA04_HA.fa
 
-#### self.reference_sequence_name = <name>
+#### self.reference_sequence_name = name
 Bowtie2 requires the user to input a "base name" for the reference sequence. For this, specify the actual name of the reference sequence, NOT the path. Ex: CA04_HA.fasta
 
 
@@ -121,18 +122,18 @@ Bowtie2 requires the user to input a "base name" for the reference sequence. For
 #### SET SNP CALLING PARAMETERS:
 One important note here is that if you would like SNPs to be annotated as to whether they cause a coding region change, then you need to put together gtf files and configure new genomes in snpEff. Instructions for how to do that are at the end of this document. 
 
-#### self.use_lofreq = <True> or <False>
-#### self.use_varscan = <True> or <False>
+#### self.use_lofreq = True or False
+#### self.use_varscan = True or False
 For each, set to True to call SNPs with that program. The pipeline can be run using either, neither or both. All output files will be written to a sub-folder called "snp_calls". 
 
-#### self.min_coverage = <integer> 
-This will set the minimum coverage required at a base in order to perform variant calling at that base. Variants at positions with coverage less than <integer> will not be called. 
+#### self.min_coverage = integer 
+This will set the minimum coverage required at a base in order to perform variant calling at that base. Variants at positions with coverage less than integer will not be called. 
 
-#### self.snp_qual_threshold = <integer>
-This will set the minimum quality score required at a base in order to perform variant calling at that base. Variants with quality scores lower than <integer> will not be called. 
+#### self.snp_qual_threshold = integer
+This will set the minimum quality score required at a base in order to perform variant calling at that base. Variants with quality scores lower than integer will not be called. 
 
-#### self.snp_frequency = <decimal>
-Variants that are present at a frequency less than that set by <decimal> will not be called. <decimal> values should range from 0 to 1, with a value of 0.01 specifying that SNPs should be called at a 1% frequency cutoff. 
+#### self.snp_frequency = decimal
+Variants that are present at a frequency less than that set by decimal will not be called. decimal values should range from 0 to 1, with a value of 0.01 specifying that SNPs should be called at a 1% frequency cutoff. 
 
 
 
@@ -184,3 +185,7 @@ a parameters file containing a summary of the commands you specified
 ### Questions and comments ###
 
 Louise Moncla lhmoncla@gmail.com
+=======
+# illumina_pipeline
+TCF lab pipeline for Illumina sequence data analysis
+ db1bde78c999a8649bc64adba3e3f241cdac1633

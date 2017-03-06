@@ -9,10 +9,13 @@ class configuration(object):
 		
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
 		self.trim = False
-		self.map = False
+		self.map = True
 		self.call_snps = True
+		self.annotate_aa_changes = True
 		self.de_novo_assembly = False
 		self.de_novo_assemble_mapped_reads = False
+		
+		# this section is not yet ready for prime time
 		self.calculate_genewise_pi = False
 		self.calculate_genewise_piNpiS = False
 		self.calculate_sliding_window_piNpiS = False
