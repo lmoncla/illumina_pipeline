@@ -152,19 +152,19 @@ Bowtie2 requires the user to input a "base name" for the reference sequence. For
 #### SET SNP CALLING PARAMETERS:
 One important note here is that if you would like SNPs to be annotated as to whether they cause a coding region change, then you need to put together gtf files and configure new genomes in snpEff. Instructions for how to do that are at the end of this document. 
 
-#### self.use_lofreq = True or False
-#### self.use_varscan = True or False
+#### self.use_lofreq = `True` or `False`
+#### self.use_varscan = `True` or `False`
 For each, set to True to call SNPs with that program. The pipeline can be run using either, neither or both. All output files will be written to a sub-folder called "snp_calls". 
 
-#### self.min_coverage = integer 
+#### self.min_coverage = `integer` 
 This will set the minimum coverage required at a base in order to perform variant calling at that base. Variants at positions with coverage less than integer will not be called. 
 
-#### self.snp_qual_threshold = integer
+#### self.snp_qual_threshold = `integer`
 This will set the minimum quality score required at a base in order to perform variant calling at that base. Variants with quality scores lower than integer will not be called. 
 
-#### self.snp_frequency = decimal
+#### self.snp_frequency = `float`
 Variants that are present at a frequency less than that set by decimal will not be called. decimal values should range from 0 to 1, with a value of 0.01 specifying that SNPs should be called at a 1% frequency cutoff. 
-=======
+
 #### self.use_lofreq = `True` or `False`
 #### self.use_varscan = `True` or `False`
 For each, set to True to call SNPs with that program. The pipeline can be run using either, neither or both. All output files will be written to a sub-folder called "snp_calls". 
@@ -227,9 +227,9 @@ a parameters file containing a summary of the commands you specified
 
 ### Questions and comments ###
 
-Louise Moncla lhmoncla@gmail.com
+Louise Moncla
+lhmoncla@gmail.com
 =======
 # illumina_pipeline
 TCF lab pipeline for Illumina sequence data analysis
- db1bde78c999a8649bc64adba3e3f241cdac1633
 =======
