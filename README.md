@@ -200,10 +200,7 @@ However, there are a few important quirks that are not specified in this documen
 #### A. Configure a new genome by adding to the the snpEff.config file. 
 1. Open this file, which is in the snpEff folder in any text editor. 
 2. Scroll to the very bottom of the file
-3. add your new reference sequence to this file using the following format. Here, `reference_sequence_name` is the full name of the fasta file you are using and the nickname is whatever you want it to be. The .genome is necessary. snpEff will not correctly make the reference genome if this does not end in .genome. 
-
-`reference_sequence_name.genome : nickname for that reference sequence`
-
+3. Add your new reference sequence to this file using the following format: `reference_sequence_name.genome : nickname for that reference sequence`. Here, `reference_sequence_name` is the full name of the fasta file you are using and the nickname is whatever you want it to be. The .genome is necessary. snpEff will not correctly make the reference genome if this does not end in .genome. 
 4. save the altered configuration file
 
 
