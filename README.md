@@ -187,6 +187,41 @@ a parameters file containing a summary of the commands you specified
 
 
 =======
+## Configuring new genomes in snpEff ##
+
+Unfortunately, putting together coding regions for each genome is a little tedious, especially if you are mapping each sample to its own reference and need to annotate a new set of coordinates for each sample. There is no very good way that I have thought of to automate this, so we are unfortunately left with these fairly specific and tedious instructions for building new genome databases with snpEff for each new genome you are using. 
+
+snpEff is a program that annotates vcf files. It functions by using genome databases that are publicly available to determine coding region coordinate. Unfortunately, this is strongly skewed towards mammalian genomes and there are only a handful of viral sequences that are already prepared. It is therefore very likely that you will need to put together your own genomic coordinates and configure new genomes for each sample. Here is how to do it. 
+
+Detailed instructions are provided on snpEff's website: http://snpeff.sourceforge.net/SnpEff_manual.html#databases
+
+However, there are a few important quirks that are not specified in this document, so here are my notes for how to do this. 
+
+1. Configure a new genome by adding to the the snpEff.config file. 
+	a. Open this file, which is in the snpEff folder in any text editor. 
+	b. Scroll to the very bottom of the file
+	c. add your new reference sequence to this file using the following format: 
+
+reference_sequence_name.genome : nickname for that reference sequence
+
+so, for example, when I added the CA04 HA entry from GenBank GQ117044, my reference_sequence_name was the full name of the fasta file I was using, and my nickname was A_California_04_2009_HA. The .genome is absolutely necessary. It will NOT work if the .genome is not present in the name. 
+
+	d. save the altered configuration file
+
+
+2. Build the database using a gtf file. This is recommended. 
+	a. cd into snpEff/data
+	b. make a new directory with the name of the reference sequence. The name of the 			folder should be exactly identical to reference_sequence_name. It should NOT include the 	.genome. 
+	c. place your genome fasta file and the associated gtf file into the reference_sequence_name folder. The reference sequence fasta file MUST be named sequences.fa. The gtf MUST be named genes.gtf. 
+	d. run the following command: java -jar snpEff.jar build -gtf22 -v reference_sequence_name
+	
+	* Note: when you run the build command, reference_sequence_name does NOT include the .genome. If you have multiple gene segments, that is fine. They just need to all have the same base names in the gtf and sequences.fa file. (so CA04_HA and CA04_NA is fine). 
+
+	* Once these steps are complete, your genome should be built in a zipped file called snpEffectPredictor.bin
+	
+3. Annotate your vcfs
+Now, simply run the command: java -jar snpEff.jar reference_sequence_name input.vcf > output.vcf
+
 
 
 ### Questions and comments ###
