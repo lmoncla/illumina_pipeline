@@ -58,7 +58,7 @@ Popoolation is used for calculating pi, piN and piS across full genes, genomes o
 
 
 ## Basic usage: ##
-`illumina_pipeline_fastq_to_snps.py config`
+`illumina_pipeline_fastq_to_snps.py`
 
 #### input files
 As this is currently written, the script will run on all of the fastq files that are in your current directory. These files should all be standard fastq files and need to end in .fastq. The program will automatically combine forward and reverse reads that derive from the same sample together into the same folder. The pipeline has been written to allow you to either map all samples to the same reference sequence (as you would want to do for any sort of experimental evolution/infection study) or to map each sample to a unique reference (as you might want to do for clinical samples). The main difference that you need to worry for specifying between these 2 options is in the reference sequence section of the config file (see: Filling in the config file below). 
