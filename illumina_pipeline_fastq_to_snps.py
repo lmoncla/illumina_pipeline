@@ -3,7 +3,7 @@
 import sys, subprocess, glob, os, shutil, re, importlib
 from subprocess import call
 
-config_filename = "config"   #sys.argv[1]
+config_filename = sys.argv[1]
 config = __import__(config_filename)						# imports config_filename as a module
 cfg = config.configuration()								# make cfg an instance of class configuration accessed from the config module
 
@@ -249,18 +249,17 @@ def pi_analyses():
 				
 		call("mkdir {s}/popoolation_analyses; cp {s}/{s}.sam {s}/popoolation_analyses/{s}.sam".format(s=s), shell=True)
 		call("samtools view -bS {s}/popoolation_analyses/{s}.sam > {s}/popoolation_analyses/{s}.bam; samtools sort {s}/popoolation_analyses/{s}.bam > {s}/popoolation_analyses/{s}.sorted.bam".format(s=s), shell=True)
-		call("samtools mpileup -d 1000000 {s}/popoolation_analyses/{s}.sorted.bam > {s}/popoolation_analyses/{s}.pileup -f {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
+		call("samtools mpileup -d 1000000 {s}/popoolation_analyses/{s}.sorted.bam > {s}/popoolation_analyses/{s}.pileup".format(s=s), shell=True)
 
 
-		if cfg.subsample == False: 
-			if cfg.calculate_genewise_pi == True:
-				call("perl /usr/local/bin/popoolation_1.2.2/Variance-at-position.pl --measure pi --pool-size 500 --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{s}.pileup --output {s}/popoolation_analyses/{s}.pi.txt".format(s=s, reference_name=reference_name,gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count,min_quality=cfg.min_quality), shell=True)
+		if cfg.calculate_genewise_pi == True:
+			call("perl /usr/local/bin/popoolation_1.2.2/Variance-at-position.pl --measure pi --pool-size 500 --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --dissable-corrections --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{s}.pileup --output {s}/popoolation_analyses/{s}.pi.txt".format(s=s, reference_name=reference_name,gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count,min_quality=cfg.min_quality), shell=True)
 			
-			if cfg.calculate_genewise_piNpiS == True: 
-				call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-at-position.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/{nonsyn_length_table} --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --dissable-corrections --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{s}.pileup --output {s}/popoolation_analyses/{s}.syn-nonsyn.txt".format(s=s, reference_name=reference_name, gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality, nonsyn_length_table=cfg.nonsyn_length_table), shell=True)
+		if cfg.calculate_genewise_piNpiS == True: 
+			call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-at-position.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/nsl_p1.txt --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --dissable-corrections --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{s}.pileup --output {s}/popoolation_analyses/{s}.syn-nonsyn.txt".format(s=s, reference_name=reference_name, gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality), shell=True)
 		
-			if cfg.calculate_sliding_window_piNpiS == False:
-				call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-sliding.pl --measure pi --pool-size 500 --codon-table syn-nonsyn/codon-table.txt --nonsyn-length-table syn-nonsyn/{nonsyn_length_table} --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --window-size {pi_window_size} --step-size {pi_step-size} --dissable-corrections --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{s}.pileup --output {s}/popoolation_analyses/{s}.sliding.txt".format(s=s, min_coverage=cfg.min_coverage,  gtf_name=gtf_name, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality,nonsyn_length_table=cfg.nonsyn_length_table,pi_window_size=cfg.pi_window_size,pi_step_size=cfg.pi_step_size), shell=True)
+		if cfg.calculate_sliding_window_piNpiS == False:
+			call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-sliding.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/syn-nonsyn/nsl_p1.txt --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --window-size {pi_window_size} --step-size {pi_step_size} --dissable-corrections --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{s}.pileup --output {s}/popoolation_analyses/{s}.sliding.txt".format(s=s, min_coverage=cfg.min_coverage,  gtf_name=gtf_name, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality,pi_window_size=cfg.pi_window_size,pi_step_size=cfg.pi_step_size), shell=True)
 
 		if cfg.subsample == True: 
 			call("mkdir {s}/popoolation_analyses/subsampled".format(s=s), shell=True)
@@ -270,7 +269,7 @@ def pi_analyses():
 				call("perl /usr/local/bin/popoolation_1.2.2/Variance-at-position.pl --measure pi --pool-size 500 --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/subsampled/{s}.{subsample_level}x.pileup --output {s}/popoolation_analyses/subsampled/{s}.{subsample_level}x.pi.txt".format(s=s, subsample_level=cfg.subsample_level,reference_name=reference_name,gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality), shell=True)
 
 			if cfg.calculate_genewise_piNpiS == True:
-				call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-at-position.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/{nonsyn_length_table} --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual 20 --dissable-corrections --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/subsampled/{s}.{subsample_level}x.pileup --output {s}/popoolation_analyses/subsampled/{s}.{subsample_level}.syn-nonsyn.txt".format(s=s, subsample_level=cfg.subsample_level,reference_name=reference_name, gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality, nonsyn_length_table=cfg.nonsyn_length_table), shell=True)
+				call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-at-position.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/nsl_p1.txt --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual 20 --dissable-corrections --gtf /usr/local/bin/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/subsampled/{s}.{subsample_level}x.pileup --output {s}/popoolation_analyses/subsampled/{s}.{subsample_level}.syn-nonsyn.txt".format(s=s, subsample_level=cfg.subsample_level,reference_name=reference_name, gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality), shell=True)
 	
 
 # create an output parameter file

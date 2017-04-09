@@ -9,15 +9,15 @@ class configuration(object):
 		
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
 		self.trim = False
-		self.map = True
-		self.call_snps = True
-		self.annotate_aa_changes = True
+		self.map = False
+		self.call_snps = False
+		self.annotate_aa_changes = False
 		self.de_novo_assembly = False
 		self.de_novo_assemble_mapped_reads = False
 		
 		# this section is not yet ready for prime time
-		self.calculate_genewise_pi = False
-		self.calculate_genewise_piNpiS = False
+		self.calculate_genewise_pi = True
+		self.calculate_genewise_piNpiS = True
 		self.calculate_sliding_window_piNpiS = False
 		
 		
@@ -26,6 +26,9 @@ class configuration(object):
 		
 ####### SET TRIMMING PARAMETERS #########################################################
 ### Fill these out if self.trim = True		
+		
+		# trim the reads as paired reads or as unpaired; set to True to run Trimmomatic in paired mode and False to run in unpaired mode
+		self.paired_trim = False
 		
 		# after trimming, discard reads below this length
 		self.minlength = 100
@@ -69,14 +72,8 @@ class configuration(object):
 ####### SPECIFY POPOOLATION PARAMETERS ##################################################
 ### Fill these out if self.calculate_genewise_pi, self.calculate_genewise_piNpiS, or self.calculate_sliding_window_pi = True		
 		
-		# Specify whether each sample should have its own gtf (set to True) or if the same one should be used for all (set to False)
-		self.use_different_gtf_for_each_sample = True
-		
-		# if using a shared gtf for all files, specify the path to that gtf here; if using a different gtf for each sample, this isn't necessary, and the program will just assume the gtf is in the folder with the fastq files
-		self.gtf_location = "/Directory/of/gtf"
-
 		# set to True if you would like to subsample the pileup file. Then set desired coverage level with subsample_level = desired depth
-		self.subsample = False
+		self.subsample = True
 		self.subsample_level = 1000
 		
 		# this sets the --min-count parameter in popoolation, which is the minimum count of the minor allele for it to be counted
@@ -87,6 +84,9 @@ class configuration(object):
 		
 		# this sets the --max-coverage parameter in popoolation; sites with coverage exceeding this value will not be used for calculating pi
 		self.max_coverage = 1000000
+		
+		# this sets the --min-quality parameter in popoolation; alleles with quality lower than this threshold will not be considered/used for diversity calculations
+		self.min_quality = 0
 		
 		# this sets the --nonsyn-length-table in popoolation, which specifies which codon table you want to use (you can choose nsl-P1.txt or nsl-P2.txt)
 		self.nonsyn_length_table = "nsl_p1.txt"
