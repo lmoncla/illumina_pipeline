@@ -15,10 +15,19 @@ class configuration(object):
 		self.de_novo_assembly = False
 		self.de_novo_assemble_mapped_reads = False
 		
-		# this section is not yet ready for prime time
+		# popoolation analyses; set self.run_popoolation = True to run any of the subsequent popoolation analyses
+		self.run_popoolation = True
+		
+		# run popoolation without subsampling
 		self.calculate_genewise_pi = True
 		self.calculate_genewise_piNpiS = True
 		self.calculate_sliding_window_piNpiS = False
+		
+		# subsampled popoolation analyses
+		self.perform_subsampling = True
+		self.calculate_subsampled_pi = True
+		self.calculate_subsampled_piNpiS = True
+		self.calculate_subsampled_sliding_window_piNpiS = False
 		
 		
 		
@@ -72,8 +81,7 @@ class configuration(object):
 ####### SPECIFY POPOOLATION PARAMETERS ##################################################
 ### Fill these out if self.calculate_genewise_pi, self.calculate_genewise_piNpiS, or self.calculate_sliding_window_pi = True		
 		
-		# set to True if you would like to subsample the pileup file. Then set desired coverage level with subsample_level = desired depth
-		self.subsample = True
+		# set desired coverage level with subsample_level = desired depth
 		self.subsample_level = 1000
 		
 		# this sets the --min-count parameter in popoolation, which is the minimum count of the minor allele for it to be counted
@@ -87,9 +95,6 @@ class configuration(object):
 		
 		# this sets the --min-quality parameter in popoolation; alleles with quality lower than this threshold will not be considered/used for diversity calculations
 		self.min_quality = 0
-		
-		# this sets the --nonsyn-length-table in popoolation, which specifies which codon table you want to use (you can choose nsl-P1.txt or nsl-P2.txt)
-		self.nonsyn_length_table = "nsl_p1.txt"
 		
 		
 
