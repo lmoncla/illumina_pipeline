@@ -21,11 +21,14 @@ for file in file_list:									# find all reads that are pairs
 	if "R1" in file:
 		samplename = file.replace("_R1_001", "")		# rename R1 reads to take out the R1_001.fastq
 		samplename = samplename.replace(".fastq", "")
+
 	elif "R2" in file:
 		samplename = file.replace("_R2_001", "")		# rename R2 reads to take out the R2_001.fastq
 		samplename = samplename.replace(".fastq", "")
+
 	else:
 		samplename=file									# if there are only nonpaired reads, just keep the same name
+		samplename = samplename.replace(".fastq", "")	
 
 	sample_list.append(samplename)
 
@@ -37,7 +40,6 @@ for file in file_list:									# find all reads that are pairs
 		sample_dict[samplename] = [file]
 
 sample_list = list(set(sample_list))					# keep only unique list entries
-
 
 
 # combine R1 and R2 fastq files and move into directories based on their sample name; if using different references for each mapping, this will also move each reference sequence into the sample folder
@@ -81,7 +83,10 @@ def map(sample_list):
 	if cfg.use_different_reference_for_each_sample == False:
 		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=cfg.reference_sequence_name), shell=True)
 		for s in sample_dict:
-			call("bowtie2 -x {reference_sequence} -U {s}/{f1}.trimmed.fastq,{s}/{f2}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_sequence=cfg.reference_sequence, f1=sample_dict[s][0], f2=sample_dict[s][1]), shell=True)
+			if len(sample_dict[s]) == 2:
+				call("bowtie2 -x {reference_sequence} -U {s}/{f1}.trimmed.fastq,{s}/{f2}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_sequence=cfg.reference_sequence, f1=sample_dict[s][0], f2=sample_dict[s][1]), shell=True)
+			elif len(sample_dict[s]) == 1:
+				call("bowtie2 -x {reference_sequence} -U {s}/{f1}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_sequence=cfg.reference_sequence, f1=sample_dict[s][0]), shell=True)
 
 
 	elif cfg.use_different_reference_for_each_sample == True:
@@ -92,7 +97,11 @@ def map(sample_list):
 			call("rm {s}/bowtie_reference_files".format(s=s), shell=True)
 			call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
 			call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
-			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/{f1}.trimmed.fastq,{s}/{f2}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_name=reference_name, f1=sample_dict[s][0], f2=sample_dict[s][1]), shell=True)
+			
+			if len(sample_dict[s]) == 2:
+				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/{f1}.trimmed.fastq,{s}/{f2}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_name=reference_name, f1=sample_dict[s][0], f2=sample_dict[s][1]), shell=True)
+			elif len(sample_dict[s]) == 1:
+				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/{f1}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_name=reference_name, f1=sample_dict[s][0]), shell=True)
 
 
 def call_SNPs():
