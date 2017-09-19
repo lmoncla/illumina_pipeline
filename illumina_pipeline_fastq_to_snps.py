@@ -217,12 +217,20 @@ def de_novo_assemble_mapped_reads():
 		call("for f in {s}/trinity_de_novo_assembly_mapped_reads_only/*.fastq; do sed -i '' $'s/\ /\_/g' $f; done".format(s=s), shell=True)
 
 		# redo bowtie mapping and put the white spaces back into the sam file
-		for file in os.listdir(s):
+		if cfg.use_different_reference_for_each_sample == True:
+			for file in os.listdir(s):
 				if file.endswith(".fasta") or file.endswith(".fa"):
 					reference_name = file
+					reference_sequence = file
+		
+		elif cfg.use_different_reference_for_each_sample == False:
+			reference_name = cfg.reference_sequence_name
+			reference_sequence = cfg.reference_sequence
+		
 		call("rm {s}/bowtie_reference_files".format(s=s), shell=True)
-		call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
-		call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
+		call("mkdir {s}/bowtie_reference_files; cp {reference_sequence} {s}/bowtie_reference_files/{reference_name}".format(s=s,reference_sequence=reference_sequence, reference_name=reference_name), shell=True)
+		call("bowtie2-build {s}/bowtie_reference_files/{reference_name} {s}/bowtie_reference_files/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
+		#call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
 		call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/trinity_de_novo_assembly_mapped_reads_only/{fastq1}.nospaces.fastq,{s}/trinity_de_novo_assembly_mapped_reads_only/{fastq2}.nospaces.fastq -S {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.sam --local".format(s=s, fastq1=fastq1, fastq2=fastq2,reference_name=reference_name), shell=True)
 
 		# put back the spaces so that trinity can use it
@@ -332,7 +340,7 @@ def create_parameter_file():
 
 # RUN THE ANALYSES
 
-combine_fastqfiles()
+#combine_fastqfiles()
 
 if cfg.trim == True:
 	trim(sample_list)
