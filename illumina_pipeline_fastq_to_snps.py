@@ -69,8 +69,11 @@ elif cfg.paired_trim == False:
 def trim(sample_list):
 	for s in sample_dict:
 		for value in sample_dict[s]:
-			if cfg.paired_trim == False:
+			if cfg.paired_trim == False and cfg.remove_adapters == False:
 				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True)
+			if cfg.paired_trim == False and cfg.remove_adapters == True:
+				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True)
+
 
 			elif cfg.paired_trim == True:
 				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True)
@@ -227,7 +230,7 @@ def de_novo_assemble_mapped_reads():
 			reference_name = cfg.reference_sequence_name
 			reference_sequence = cfg.reference_sequence
 		
-		call("rm {s}/bowtie_reference_files".format(s=s), shell=True)
+		call("rm {s}/bowtie_reference_files; rm {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True)
 		call("mkdir {s}/bowtie_reference_files; cp {reference_sequence} {s}/bowtie_reference_files/{reference_name}".format(s=s,reference_sequence=reference_sequence, reference_name=reference_name), shell=True)
 		call("bowtie2-build {s}/bowtie_reference_files/{reference_name} {s}/bowtie_reference_files/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
 		#call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
@@ -239,8 +242,8 @@ def de_novo_assemble_mapped_reads():
 
 		# split sam file into forward and reverse and then extract fastqs
 		call("splitsam.sh {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.sam {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.sam {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.sam {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.unmapped.sam".format(s=s), shell=True)
-		call("reformat.sh in={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.sam out={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.fastq".format(s=s), shell=True)
-		call("reformat.sh in={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.sam out={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.fastq".format(s=s), shell=True)
+		call("reformat.sh in={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.sam out={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.fastq ow=t".format(s=s), shell=True)
+		call("reformat.sh in={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.sam out={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.fastq ow=t".format(s=s), shell=True)
 
 		# perform de novo assembly
 		call("/usr/local/bin/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --single {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.fastq,{s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.fastq --max_memory 3G --output {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True)
@@ -340,7 +343,7 @@ def create_parameter_file():
 
 # RUN THE ANALYSES
 
-#combine_fastqfiles()
+combine_fastqfiles()
 
 if cfg.trim == True:
 	trim(sample_list)
