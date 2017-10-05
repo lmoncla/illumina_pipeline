@@ -74,7 +74,6 @@ def trim(sample_list):
 			if cfg.paired_trim == False and cfg.remove_adapters == True:
 				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True)
 
-
 			elif cfg.paired_trim == True:
 				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True)
 
@@ -82,14 +81,21 @@ def trim(sample_list):
 # perform mapping
 def map(sample_list):
 
+	# set the trimmed fastq files to use for mapping
+	for s in sample_dict:
+		trimmed_reads = []
+	
+		for f in os.listdir(s):
+			if f.endswith(".trimmed.fastq") == True:
+				trimmed = s + "/" + f
+				trimmed_reads.append(trimmed)
+		fastqs_to_map = ",".join(trimmed_reads)
+
+
 	if cfg.use_different_reference_for_each_sample == False:
 		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=cfg.reference_sequence_name), shell=True)
 		for s in sample_dict:
-			if len(sample_dict[s]) == 2:
-				call("bowtie2 -x {reference_sequence} -U {s}/{f1}.trimmed.fastq,{s}/{f2}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_sequence=cfg.reference_sequence, f1=sample_dict[s][0], f2=sample_dict[s][1]), shell=True)
-			elif len(sample_dict[s]) == 1:
-				call("bowtie2 -x {reference_sequence} -U {s}/{f1}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_sequence=cfg.reference_sequence, f1=sample_dict[s][0]), shell=True)
-
+			call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True)
 
 	elif cfg.use_different_reference_for_each_sample == True:
 		for s in sample_dict:
@@ -100,10 +106,7 @@ def map(sample_list):
 			call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
 			call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
 			
-			if len(sample_dict[s]) == 2:
-				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/{f1}.trimmed.fastq,{s}/{f2}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_name=reference_name, f1=sample_dict[s][0], f2=sample_dict[s][1]), shell=True)
-			elif len(sample_dict[s]) == 1:
-				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/{f1}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_name=reference_name, f1=sample_dict[s][0]), shell=True)
+			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True)
 
 
 # perform duplicate read removal with picard
@@ -116,7 +119,57 @@ def remove_duplicate_reads():
 		call("java -jar /usr/local/bin/picard.jar MarkDuplicates I={s}/{s}.sorted.sam O={s}/{s}.nodups.sam REMOVE_DUPLICATES=true M=file.params.txt".format(s=s), shell=True)
 		
 		# clean up names and remove the .sorted.sam file
-		call("rm {s}/{s}.sorted.sam".format(s=s), shell=True)
+		call("rm {s}/{s}.sorted.sam; rm {s}/{s}.sam.sorted.bam".format(s=s), shell=True)
+
+
+
+def normalize_coverage():
+	for s in sample_dict:
+		print "normalizing coverage for %s using bbnorm" % s
+		
+		deduped = ""
+		original = ""
+		
+		# set which sam file to use for normalization, based on whether duplicate read removal is turned on or off
+		for f in os.listdir(s):
+			if f.endswith(".nodups.sam") == True:
+				deduped = f
+			elif f == s + ".sam":
+				original = f
+		if cfg.remove_duplicate_reads == True:
+			sam_file = deduped
+			output_sam_name = s + ".nodups.normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
+			normalized_fastq_name = s + ".nodups.normalized.fastq"
+		elif cfg.remove_duplicate_reads == False:
+			sam_file = original
+			output_sam_name = s + ".normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
+			normalized_fastq_name = s + ".normalized.fastq"
+
+		call("reformat.sh in={s}/{sam_file} out={s}/{s}.reextracted_from_sam.fastq".format(s=s, sam_file=sam_file), shell=True)	
+	
+		# run bbnorm on the combined file
+		call("bbnorm.sh in={s}/{s}.reextracted_from_sam.fastq out={s}/{normalized_fastq_name} target={cov_depth}".format(s=s, normalized_fastq_name=normalized_fastq_name, cov_depth=cfg.coverage_normalization_depth), shell=True)
+		call("rm {s}/{s}.reextracted_from_sam.fastq".format(s=s), shell=True)
+		
+		
+	# remap with bowtie2 
+	fastqs_to_map = s + "/" + normalized_fastq_name
+	if cfg.use_different_reference_for_each_sample == False:
+		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=cfg.reference_sequence_name), shell=True)
+		for s in sample_dict:
+			call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{output_sam_name} --local".format(s=s, output_sam_name=output_sam_name, fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True)
+
+	elif cfg.use_different_reference_for_each_sample == True:
+		for s in sample_dict:
+			for file in os.listdir(s):
+				if file.endswith(".fasta") or file.endswith(".fa"):
+					reference_name = file
+				#call("rm {s}/bowtie_reference_files".format(s=s), shell=True)
+				#call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
+				#call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
+			
+			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{output_sam_name} --local".format(s=s, output_sam_name=output_sam_name, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True)
+
 
 
 def call_SNPs():
@@ -129,8 +182,9 @@ def call_SNPs():
 			sam_file = s + "/" + s + ".sam"
 				
 		#convert sam to bam, then sort bam file
-		call("samtools view -bS {sam_file} > {sam_file}.bam".format(sam_file=sam_file), shell=True)
-		call("samtools sort {sam_file}.bam > {sam_file}.sorted.bam".format(sam_file=sam_file), shell=True)
+		call("samtools view -bS {sam_file}|samtools sort > {sam_file}.sorted.bam".format(sam_file=sam_file), shell=True)
+		#call("samtools view -bS {sam_file} > {sam_file}.bam".format(sam_file=sam_file), shell=True)
+		#call("samtools sort {sam_file}.bam > {sam_file}.sorted.bam".format(sam_file=sam_file), shell=True)
 		call("rm {sam_file}.lofreq.{freq}.vcf; rm {sam_file}.filtered.{freq}.vcf".format(sam_file=sam_file,freq=cfg.snp_frequency), shell=True)
 
 		# assign names to snpEff_ref_name variable, which will be used for amino acid annotation with snpEff
@@ -370,8 +424,11 @@ if cfg.trim == True:
 if cfg.map == True:
 	map(sample_list)
 
-if cfg.remove_duplicate_reads == True:
-	remove_duplicate_reads()
+#if cfg.remove_duplicate_reads == True:
+	#remove_duplicate_reads()
+
+if cfg.normalize_coverage == True:
+	normalize_coverage()
 
 if cfg.call_snps == True:
 	call_SNPs()
