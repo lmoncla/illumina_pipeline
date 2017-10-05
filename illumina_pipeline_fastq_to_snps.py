@@ -79,7 +79,6 @@ def trim(sample_list):
 				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True)
 
 
-
 # perform mapping
 def map(sample_list):
 
@@ -107,12 +106,32 @@ def map(sample_list):
 				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/{f1}.trimmed.fastq -S {s}/{s}.sam --local".format(s=s, reference_name=reference_name, f1=sample_dict[s][0]), shell=True)
 
 
-def call_SNPs():
+# perform duplicate read removal with picard
+def remove_duplicate_reads():
 	for s in sample_dict:
 		#convert sam to bam, then sort bam file
-		call("samtools view -bS {s}/{s}.sam > {s}/{s}.bam".format(s=s), shell=True)
-		call("samtools sort {s}/{s}.bam > {s}/{s}.sorted.bam".format(s=s), shell=True)
-		call("rm {s}/{s}.lofreq.{freq}.vcf; rm {s}/{s}.filtered.{freq}.vcf".format(s=s,freq=cfg.snp_frequency), shell=True)
+		call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True)
+		
+		# run picard
+		call("java -jar /usr/local/bin/picard.jar MarkDuplicates I={s}/{s}.sorted.sam O={s}/{s}.nodups.sam REMOVE_DUPLICATES=true M=file.params.txt".format(s=s), shell=True)
+		
+		# clean up names and remove the .sorted.sam file
+		call("rm {s}/{s}.sorted.sam".format(s=s), shell=True)
+
+
+def call_SNPs():
+	for s in sample_dict:
+		
+		# define sam file based on whether duplicate read removal is turned on or off
+		if cfg.remove_duplicate_reads == True:
+			sam_file = s + "/" + s + ".nodups.sam"
+		elif cfg.remove_duplicate_reads == False:
+			sam_file = s + "/" + s + ".sam"
+				
+		#convert sam to bam, then sort bam file
+		call("samtools view -bS {sam_file} > {sam_file}.bam".format(sam_file=sam_file), shell=True)
+		call("samtools sort {sam_file}.bam > {sam_file}.sorted.bam".format(sam_file=sam_file), shell=True)
+		call("rm {sam_file}.lofreq.{freq}.vcf; rm {sam_file}.filtered.{freq}.vcf".format(sam_file=sam_file,freq=cfg.snp_frequency), shell=True)
 
 		# assign names to snpEff_ref_name variable, which will be used for amino acid annotation with snpEff
 		if cfg.use_different_reference_for_each_sample == False:
@@ -143,7 +162,7 @@ def call_SNPs():
 
 			if cfg.use_lofreq == True:
 				print "now calling SNPs on %s using lofreq" % s
-				call("lofreq call -f {s}/{reference_sequence} -o {s}/{s}.lofreq.{snp_frequency}.vcf {s}/{s}.sorted.bam".format(s=s, snp_frequency=cfg.snp_frequency, reference_sequence=reference_sequence), shell=True)
+				call("lofreq call -f {s}/{reference_sequence} -o {s}/{s}.lofreq.{snp_frequency}.vcf {sam_file}.sorted.bam".format(s=s, sam_file=sam_file, snp_frequency=cfg.snp_frequency, reference_sequence=reference_sequence), shell=True)
 				call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {s}/{s}.lofreq.{snp_frequency}.vcf -o {s}/{s}.lofreq.filtered.{snp_frequency}.vcf".format(s=s, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True)
 
 				if cfg.annotate_aa_changes == True:
@@ -151,8 +170,8 @@ def call_SNPs():
 
 			if cfg.use_varscan == True:
 				print "now calling SNPs on %s using varscan" % s
-				call("samtools mpileup -d 1000000 {s}/{s}.sorted.bam > {s}/{s}.pileup -f {s}/{reference_sequence}".format(s=s, reference_sequence=reference_sequence), shell=True)
-				call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{s}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{s}.varscan.snps.{snp_frequency}.vcf".format(s=s,snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True)
+				call("samtools mpileup -d 1000000 {sam_file}.sorted.bam > {sam_file}.pileup -f {s}/{reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=reference_sequence), shell=True)
+				call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{s}.varscan.snps.{snp_frequency}.vcf".format(s=s, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True)
 
 				if cfg.annotate_aa_changes == True:
 					call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{s}.varscan.snps.{snp_frequency}.vcf > {s}/{s}.varscan.snps.annotated.{snp_frequency}.vcf".format(snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True)
@@ -163,7 +182,7 @@ def call_SNPs():
 			# call variants with lofreq and filter them
 			if cfg.use_lofreq == True:
 				print "now calling SNPs on %s using lofreq" % s
-				call("lofreq call -f {reference_sequence} -o {s}/{s}.lofreq.{snp_frequency}.vcf {s}/{s}.sorted.bam".format(s=s, snp_frequency=cfg.snp_frequency, reference_sequence=cfg.reference_sequence), shell=True)
+				call("lofreq call -f {reference_sequence} -o {s}/{s}.lofreq.{snp_frequency}.vcf {sam_file}.sorted.bam".format(s=s, sam_file=sam_file, snp_frequency=cfg.snp_frequency, reference_sequence=cfg.reference_sequence), shell=True)
 				call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {s}/{s}.lofreq.{snp_frequency}.vcf -o {s}/{s}.filtered.{snp_frequency}.vcf".format(s=s, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True)
 
 				if cfg.annotate_aa_changes == True:
@@ -171,8 +190,8 @@ def call_SNPs():
 
 			if cfg.use_varscan == True:
 				print "now calling SNPs on %s using varscan" % s
-				call("samtools mpileup -d1000000 {s}/{s}.sorted.bam > {s}/{s}.pileup -f {reference_sequence}".format(s=s, reference_sequence=cfg.reference_sequence), shell=True)
-				call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{s}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{s}.varscan.snps.{snp_frequency}.vcf".format(s=s,snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True)
+				call("samtools mpileup -d1000000 {sam_file}.sorted.bam > {sam_file}.pileup -f {reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=cfg.reference_sequence), shell=True)
+				call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{s}.varscan.snps.{snp_frequency}.vcf".format(s=s, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True)
 
 			if cfg.annotate_aa_changes == True:
 				call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{s}.varscan.snps.{snp_frequency}.vcf > {s}/{s}.varscan.snps.annotated.{snp_frequency}.vcf".format(snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True)
@@ -351,6 +370,9 @@ if cfg.trim == True:
 if cfg.map == True:
 	map(sample_list)
 
+if cfg.remove_duplicate_reads == True:
+	remove_duplicate_reads()
+
 if cfg.call_snps == True:
 	call_SNPs()
 
@@ -361,7 +383,6 @@ create_parameter_file()
 
 if cfg.de_novo_assembly == True:
 	de_novo_assembly()
-
 
 if cfg.run_popoolation == True:
 	pi_analyses()

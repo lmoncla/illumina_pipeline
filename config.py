@@ -8,13 +8,17 @@ class configuration(object):
 ####### SPECIFY WHICH TASKS YOU WANT TO DO HERE #########################################
 
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
-		self.trim = True
-		self.map = True
+		self.trim = False
+		self.map = False
 		self.call_snps = True
 		self.annotate_aa_changes = False
 		self.de_novo_assembly = False
 		self.de_novo_assemble_mapped_reads = False
 
+		# data cleaning tasks: coverage depth normalization with bbnorm and duplicate read removal with picard; these will be implemented upstream of variant calling, such that variant calling will use the de-duplicated or normalized sam/bam file
+		self.normalize_coverage = False
+		self.remove_duplicate_reads = True
+		
 		# popoolation analyses; set self.run_popoolation = True to run any of the subsequent popoolation analyses
 		self.run_popoolation = False
 
@@ -52,6 +56,12 @@ class configuration(object):
 		# trim reads using a quality score threshold of this (for Q30, set to 30, etc...)
 		self.trim_qscore = 30
 
+####### SET cleaning PARAMETERS #########################################################
+### Fill these out if self.normalize_coverage or self.remove_duplicate_reads = True
+		
+		# using bbnorm from the bbmap software package, normalize coverage across the sam or bam file to a set coverage depth, specified with self.coverage_normalization_depth = DEPTH
+		self.coverage_normalization_depth = 1000
+		
 
 ###### SPECIFY REFERENCE SEQUENCE ########################################################
 ### Fill these out if self.map = True
@@ -63,7 +73,7 @@ class configuration(object):
 		self.reference_sequence_name = "G_MuVs.BC.CAN.24.16_Pt7_mumps_19_Specimen.fasta"
 
 		# If, instead of mapping everything to the same reference you would like to map sample to a different reference, then specify True here. This will also require that the references you wish to use have been placed in the same folder as the trimmed fastq files.
-		self.use_different_reference_for_each_sample = False
+		self.use_different_reference_for_each_sample = True
 
 ####### SET SNP CALLING PARAMETERS ######################################################
 ### Fill these out if self.call_snps = True
