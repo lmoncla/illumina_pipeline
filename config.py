@@ -10,8 +10,8 @@ class configuration(object):
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
 		self.trim = False
 		self.map = False
-		self.call_snps = False
-		self.annotate_aa_changes = False
+		self.call_snps = True
+		self.annotate_aa_changes = True
 		self.de_novo_assembly = False
 		self.de_novo_assemble_mapped_reads = False
 
@@ -19,15 +19,15 @@ class configuration(object):
 		self.remove_duplicate_reads = True
 		
 		# using bbnorm from the bbmap software package, normalize coverage across the sam or bam file to a set coverage depth, specified with self.coverage_normalization_depth = DEPTH
-		self.normalize_coverage = True
+		self.normalize_coverage = False
 		self.coverage_normalization_depth = 1000
 	
 		# popoolation analyses; set self.run_popoolation = True to run any of the subsequent popoolation analyses
-		self.run_popoolation = False
+		self.run_popoolation = True
 
 		# run popoolation without subsampling
-		self.calculate_genewise_pi = False
-		self.calculate_genewise_piNpiS = False
+		self.calculate_genewise_pi = True
+		self.calculate_genewise_piNpiS = True
 		self.calculate_sliding_window_piNpiS = False
 
 		# subsampled popoolation analyses
