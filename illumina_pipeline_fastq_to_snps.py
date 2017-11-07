@@ -95,7 +95,8 @@ def map(sample_list):
 	if cfg.use_different_reference_for_each_sample == False:
 		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=cfg.reference_sequence_name), shell=True)
 		for s in sample_dict:
-			call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True)
+			call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/mapped.sam --local".format(s=s,fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True)
+			call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 	elif cfg.use_different_reference_for_each_sample == True:
 		for s in sample_dict:
@@ -107,6 +108,7 @@ def map(sample_list):
 			call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
 			
 			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True)
+			call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 
 # perform duplicate read removal with picard
@@ -156,7 +158,8 @@ def normalize_coverage():
 		fastqs_to_map = s + "/" + normalized_fastq_name
 		if cfg.use_different_reference_for_each_sample == False:
 			call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=cfg.reference_sequence_name), shell=True)
-			call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{output_sam_name} --local".format(s=s, output_sam_name=output_sam_name, fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True)
+			call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{output_sam_name} --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True)
+			call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{output_sam_name}; rm {s}/mapped.sam".format(s=s, output_sam_name=output_sam_name, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 		elif cfg.use_different_reference_for_each_sample == True:
 			for file in os.listdir(s):
@@ -166,7 +169,8 @@ def normalize_coverage():
 				#call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
 				#call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
 			
-			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{output_sam_name} --local".format(s=s, output_sam_name=output_sam_name, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True)
+			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/mapped.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True)
+			call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{output_sam_name}; rm {s}/mapped.sam".format(s=s, output_sam_name=output_sam_name, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 
 

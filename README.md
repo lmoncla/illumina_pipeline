@@ -38,7 +38,7 @@ Varscan is another option for a variant caller. Allows variants to be called/fil
 
 #### samtools
 http://samtools.sourceforge.net/
-Necessary for converting sam/bam files, sorting bam files and generating pileup files
+Necessary for converting sam/bam files, sorting bam files, removing low mapping quality reads from sam files, and generating pileup files
 
 #### Trinity
 https://github.com/trinityrnaseq/trinityrnaseq/wiki
@@ -131,7 +131,7 @@ Phred-based quality score threshold to use during trimming. If you would like to
 
 =======
 
-#### SPECIFY REFERENCE SEQEUNCE:
+#### SPECIFY REFERENCE SEQEUNCE AND MAPPING QUALITY:
 One important note here is that this pipeline is meant to run with a single reference sequence file. If you want to specify multiple gene segments, simply put all of them into the same fasta file. The fasta file must end in .fasta or .fa.
 
 #### self.use_different_reference_for_each_sample = `True` or `False`
@@ -142,6 +142,9 @@ If you are mapping everything to the same reference sequence, then you have to s
 
 #### self.reference_sequence_name = `name`
 Bowtie2 requires the user to input a "base name" for the reference sequence. For this, specify the actual name of the reference sequence, NOT the path. Ex: CA04_HA.fasta
+
+#### self.mapping_quality_threshold = `30`
+After mapping with bowtie, it is a good idea to remove reads from the sam file that have a low mapping quality score. Reads with mapping quality scores less than this value will be removed from the sam file. If you do not wish to use this option, set to 0. These values are specified as Phred scores. 
 
 =======
 #### SET SNP CALLING PARAMETERS:
