@@ -107,7 +107,7 @@ def map(sample_list):
 			call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
 			call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
 			
-			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True)
+			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/mapped.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True)
 			call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 
