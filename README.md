@@ -106,6 +106,8 @@ Use bbnorm.sh from the bbmap software package to normalize coverage across the g
 
 #### self.coverage_normalization_depth = `integer`
 Set the desired depth of coverage you wish to achieve after coverage normalization to `integer`.
+
+
 =======
 
 ### SECTION 2 : SET/ALTER PARAMETERS
