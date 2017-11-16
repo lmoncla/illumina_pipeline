@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import sys, subprocess, glob, os, shutil, re, importlib
 from subprocess import call
@@ -201,7 +201,7 @@ def call_SNPs():
 
 		# assign names to snpEff_ref_name variable, which will be used for amino acid annotation with snpEff
 		if cfg.use_different_reference_for_each_sample == False:
-			snpEff_ref_name = cfg.reference_sequence_name
+			snpEff_ref_name = reference_sequence_name
 
 		elif cfg.use_different_reference_for_each_sample == True:
 			for file in os.listdir(s):
@@ -313,7 +313,7 @@ def de_novo_assemble_mapped_reads():
 					reference_sequence = file
 		
 		elif cfg.use_different_reference_for_each_sample == False:
-			reference_name = cfg.reference_sequence_name
+			reference_name = reference_sequence_name
 			reference_sequence = cfg.reference_sequence
 		
 		call("rm {s}/bowtie_reference_files; rm {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True)
