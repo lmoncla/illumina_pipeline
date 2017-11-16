@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import sys, subprocess, glob, os, shutil, re, importlib
 from subprocess import call
