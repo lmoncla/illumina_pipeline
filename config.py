@@ -66,9 +66,6 @@ class configuration(object):
 		# here, put the full path for the reference sequence you wish to use for mapping. You can figure out the full path by dragging and dropping the file into the terminal, and then copying that file path into here
 		self.reference_sequence = "/Users/lmoncla/Documents/McCrone_et_al/full_genome.fasta"
 
-		# specify what you would like your reference sequence to be named
-		self.reference_sequence_name = "full_genome.fasta"
-
 		# If, instead of mapping everything to the same reference you would like to map sample to a different reference, then specify True here. This will also require that the references you wish to use have been placed in the same folder as the trimmed fastq files.
 		self.use_different_reference_for_each_sample = False
 		

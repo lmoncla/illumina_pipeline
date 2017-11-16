@@ -140,9 +140,6 @@ Specify True to map all of the samples to the same reference sequence or False t
 #### self.reference_sequence = `path to reference sequence`
 If you are mapping everything to the same reference sequence, then you have to specify the full path to the reference sequence you wish to use. The reference sequence should be in fasta format and can end in .fasta or .fa. Ex: User/Documents/CA04_HA.fa
 
-#### self.reference_sequence_name = `name`
-Bowtie2 requires the user to input a "base name" for the reference sequence. For this, specify the actual name of the reference sequence, NOT the path. Ex: CA04_HA.fasta
-
 #### self.mapping_quality_threshold = `30`
 After mapping with bowtie, it is a good idea to remove reads from the sam file that have a low mapping quality score. Reads with mapping quality scores less than this value will be removed from the sam file. If you do not wish to use this option, set to 0. These values are specified as Phred scores. 
 
