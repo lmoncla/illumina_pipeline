@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 import sys, subprocess, glob, os, shutil, re, importlib
 from subprocess import call
@@ -41,6 +41,7 @@ for file in file_list:									# find all reads that are pairs
 		sample_dict[samplename] = [file]
 
 sample_list = list(set(sample_list))					# keep only unique list entries
+print sample_dict
 
 
 # combine R1 and R2 fastq files and move into directories based on their sample name; if using different references for each mapping, this will also move each reference sequence into the sample folder
@@ -82,25 +83,33 @@ def trim(sample_list):
 # perform mapping
 def map(sample_list):
 
-	# set the trimmed fastq files to use for mapping
-	for s in sample_dict:
-		trimmed_reads = []
-	
-		for f in os.listdir(s):
-			if f.endswith(".trimmed.fastq") == True:
-				trimmed = s + "/" + f
-				trimmed_reads.append(trimmed)
-		fastqs_to_map = ",".join(trimmed_reads)
-
-
 	if cfg.use_different_reference_for_each_sample == False:
 		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=reference_sequence_name), shell=True)
 		for s in sample_dict:
+			
+			# set the trimmed fastq files to use for mapping
+			trimmed_reads = []
+			for f in os.listdir(s):
+				if f.endswith(".trimmed.fastq") == True:
+					trimmed = s + "/" + f
+					trimmed_reads.append(trimmed)
+			fastqs_to_map = ",".join(trimmed_reads)
+
 			call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s,fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True)
 			#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 	elif cfg.use_different_reference_for_each_sample == True:
 		for s in sample_dict:
+			
+			# set the trimmed fastq files to use for mapping
+			trimmed_reads = []
+			
+			for f in os.listdir(s):
+				if f.endswith(".trimmed.fastq") == True:
+					trimmed = s + "/" + f
+					trimmed_reads.append(trimmed)
+			fastqs_to_map = ",".join(trimmed_reads)
+
 			for file in os.listdir(s):
 				if file.endswith(".fasta") or file.endswith(".fa"):
 					reference_name = file

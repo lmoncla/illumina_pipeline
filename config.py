@@ -8,15 +8,15 @@ class configuration(object):
 ####### SPECIFY WHICH TASKS YOU WANT TO DO HERE #########################################
 
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
-		self.trim = False
-		self.map = False
+		self.trim = True
+		self.map = True
 		self.call_snps = True
 		self.annotate_aa_changes = False
 		self.de_novo_assembly = False
 		self.de_novo_assemble_mapped_reads = False
 
 		# data cleaning tasks: coverage depth normalization with bbnorm and duplicate read removal with picard; these will be implemented upstream of variant calling, such that variant calling will use the de-duplicated or normalized sam/bam file
-		self.remove_duplicate_reads = False
+		self.remove_duplicate_reads = True
 		
 		# using bbnorm from the bbmap software package, normalize coverage across the sam or bam file to a set coverage depth, specified with self.coverage_normalization_depth = DEPTH
 		self.normalize_coverage = False
@@ -64,13 +64,10 @@ class configuration(object):
 ### Fill these out if self.map = True
 
 		# here, put the full path for the reference sequence you wish to use for mapping. You can figure out the full path by dragging and dropping the file into the terminal, and then copying that file path into here
-		self.reference_sequence = "/Users/lmoncla/Documents/McCrone_et_al/full_genome.fasta"
+		self.reference_sequence = "/Volumes/Seagate_Backup_Plus_Drive/work_computer_hard_backups/Documents/McCrone_et_al/CA04_validation/CA04_HA_GQ117044.fasta"
 
 		# If, instead of mapping everything to the same reference you would like to map sample to a different reference, then specify True here. This will also require that the references you wish to use have been placed in the same folder as the trimmed fastq files.
 		self.use_different_reference_for_each_sample = False
-		
-		# set the minimum Q-score for mapping quality that you wish to implement. Reads with mapping quality scores less than this value will be removed from the sam/bam file
-		self.mapping_quality_threshold = 0
 
 ####### SET SNP CALLING PARAMETERS ######################################################
 ### Fill these out if self.call_snps = True
@@ -83,7 +80,7 @@ class configuration(object):
 		self.min_cov = 100
 
 		# set base quality threshold, i.e., SNPs will not be called for bases that have a Qscore below this value
-		self.snp_qual_threshold = 35
+		self.snp_qual_threshold = 30
 
 		# set SNP frequency cutoff (1% would be specified as 0.01). SNPs present below this frequency will not be reported
 		self.snp_frequency = 0.01
