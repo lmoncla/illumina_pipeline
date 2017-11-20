@@ -16,7 +16,7 @@ class configuration(object):
 		self.de_novo_assemble_mapped_reads = False
 
 		# data cleaning tasks: coverage depth normalization with bbnorm and duplicate read removal with picard; these will be implemented upstream of variant calling, such that variant calling will use the de-duplicated or normalized sam/bam file
-		self.remove_duplicate_reads = True
+		self.remove_duplicate_reads = False
 		
 		# using bbnorm from the bbmap software package, normalize coverage across the sam or bam file to a set coverage depth, specified with self.coverage_normalization_depth = DEPTH
 		self.normalize_coverage = False
@@ -64,7 +64,7 @@ class configuration(object):
 ### Fill these out if self.map = True
 
 		# here, put the full path for the reference sequence you wish to use for mapping. You can figure out the full path by dragging and dropping the file into the terminal, and then copying that file path into here
-		self.reference_sequence = "/Volumes/Seagate_Backup_Plus_Drive/work_computer_hard_backups/Documents/McCrone_et_al/CA04_validation/CA04_HA_GQ117044.fasta"
+		self.reference_sequence = "/Volumes/Seagate_Backup_Plus_Drive/work_computer_hard_backups/Documents/McCrone_et_al/full_genome.fasta"
 
 		# If, instead of mapping everything to the same reference you would like to map sample to a different reference, then specify True here. This will also require that the references you wish to use have been placed in the same folder as the trimmed fastq files.
 		self.use_different_reference_for_each_sample = False
