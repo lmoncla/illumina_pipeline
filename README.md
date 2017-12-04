@@ -143,7 +143,7 @@ Specify True to map all of the samples to the same reference sequence or False t
 If you are mapping everything to the same reference sequence, then you have to specify the full path to the reference sequence you wish to use. The reference sequence should be in fasta format and can end in .fasta or .fa. Ex: User/Documents/CA04_HA.fa
 
 #### self.mapping_quality_threshold = `30`
-After mapping with bowtie, it is a good idea to remove reads from the sam file that have a low mapping quality score. Reads with mapping quality scores less than this value will be removed from the sam file. If you do not wish to use this option, set to 0. These values are specified as Phred scores. 
+After mapping with bowtie, it is a good idea to remove reads from the sam file that have a low mapping quality score. Reads with mapping quality scores less than this value will be removed from the sam file. If you do not wish to use this option, set to 0. These values are specified as Phred scores.
 
 =======
 #### SET SNP CALLING PARAMETERS:
@@ -232,6 +232,8 @@ However, there are a few important quirks that are not specified in this documen
 4. run the following command: `java -jar snpEff.jar build -gtf22 -v reference_sequence_name`
 
 * Note: when you run the build command, reference_sequence_name does NOT include the .genome. If you have multiple gene segments whose coordinates are all specified in 1 gtf, that is fine. They just need to all have the same base names in the gtf and sequences.fa file (so CA04_HA and CA04_NA is fine).
+
+* SNPEff is quite particular about how the gtf is formatted. GTFs that work for popoolation will NOT always work properly for SNPEff, especially for influenza M and NS. In order for codons to be properly annotated for M and NS, you need to include a gene, transcript, and cds line for each protein. So for M1 and NS1, you need to provide a gene, transcript and cds line. For M2 and NEP you need to provide a gene, transcript, and 2 cds lines. An example gtf and sequences fasta is provided in the folder "SnpEff example files." If you do not annotate these properly, SNPs in the 2nd region of M2 and NEP will have the incorrect amino acid number. 
 
 * Once these steps are complete, your genome should be built in a zipped file called snpEffectPredictor.bin
 
