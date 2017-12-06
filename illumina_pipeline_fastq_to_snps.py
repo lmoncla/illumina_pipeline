@@ -20,11 +20,11 @@ for file in glob.glob("*.fastq"):						# glob will find instances of all files e
 
 for file in file_list:									# find all reads that are pairs
 	if "R1" in file:
-		samplename = file.replace("_R1_001", "")		# rename R1 reads to take out the R1_001.fastq
+		samplename = file.replace("_R1", "")		# rename R1 reads to take out the R1_001.fastq
 		samplename = samplename.replace(".fastq", "")
 
 	elif "R2" in file:
-		samplename = file.replace("_R2_001", "")		# rename R2 reads to take out the R2_001.fastq
+		samplename = file.replace("_R2", "")		# rename R2 reads to take out the R2_001.fastq
 		samplename = samplename.replace(".fastq", "")
 
 	else:
@@ -41,7 +41,6 @@ for file in file_list:									# find all reads that are pairs
 		sample_dict[samplename] = [file]
 
 sample_list = list(set(sample_list))					# keep only unique list entries
-print sample_dict
 
 
 # combine R1 and R2 fastq files and move into directories based on their sample name; if using different references for each mapping, this will also move each reference sequence into the sample folder
@@ -464,8 +463,8 @@ if cfg.trim == True:
 if cfg.map == True:
 	map(sample_list)
 
-if cfg.remove_duplicate_reads == True:
-	remove_duplicate_reads()
+#if cfg.remove_duplicate_reads == True:
+	#remove_duplicate_reads()
 
 if cfg.normalize_coverage == True:
 	normalize_coverage()
