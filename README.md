@@ -165,7 +165,7 @@ Variants that are present at a frequency less than that set by decimal will not 
 =======
 
 ### Output
-After this has been run, a folder will be made for each sample, which will contain the original fastq files, trimmed fastq files, mapping files in sam and bam format, variant calls in vcf format, and a parameters file. Details are below:
+After this has been run, a folder will be made for each sample, which will contain the original fastq files, trimmed fastq files, mapping files in sam and bam format, variant calls in vcf format, a parameters file, and a log file. The log file contains the standard out for all of the shell commands being run within this pipeline and will contain any errors that stem from the programs being called. Details are below:
 
 #### sample.fastq
 the original fastq files
@@ -203,8 +203,14 @@ A folder containing the output files for Trinity when run using all reads as inp
 #### trinity_de_novo_assembly_mapped_reads_only
 A folder that contains the output files for Trinity when run using only mapped reads as input. The output contigs are in a file called Trinity.fasta and the restuls from sending those contigs to BLAST are contained in Trinity_BLAST_result.txt.
 
+#### coverage_norm_and_duplicate_read_removal
+This folder will contain all the results of analyses performed on data where duplicate reads have been removed or the coverage has been normalized. This folder will contain the mapping files (sam/bam) and variant call files (vcfs). Files that contain ".nodups" are ones in which duplicate reads were removed. Files that contain ".normalized.`coverage_value`x" are ones in which coverage was normalized to an average coverage of `coverage_value`. Output files that contain ".nodups.normalized.`coverage_value`x" are ones that had both duplicates removed, and then coverage normalized afterwards. Doing both is usually unnecessary, as often removing duplicate reads results in much less and more even coverage. 
+
 #### sample.params
 a parameters file containing a summary of the commands you specified
+
+#### log_file.txt
+a log file containing the output that would have been printed to the screen from the programs that have been called. Will contain any errors, so this is a good place to start if you notice that you are missing a file that should have been generated, or there seem to be problems with your output.
 
 
 =======
@@ -233,7 +239,7 @@ However, there are a few important quirks that are not specified in this documen
 
 * Note: when you run the build command, reference_sequence_name does NOT include the .genome. If you have multiple gene segments whose coordinates are all specified in 1 gtf, that is fine. They just need to all have the same base names in the gtf and sequences.fa file (so CA04_HA and CA04_NA is fine).
 
-* SNPEff is quite particular about how the gtf is formatted. GTFs that work for popoolation will NOT always work properly for SNPEff, especially for influenza M and NS. In order for codons to be properly annotated for M and NS, you need to include a gene, transcript, and cds line for each protein. So for M1 and NS1, you need to provide a gene, transcript and cds line. For M2 and NEP you need to provide a gene, transcript, and 2 cds lines. An example gtf and sequences fasta is provided in the folder "SnpEff example files." If you do not annotate these properly, SNPs in the 2nd region of M2 and NEP will have the incorrect amino acid number. 
+* SNPEff is quite particular about how the gtf is formatted. GTFs that work for popoolation will NOT always work properly for SNPEff, especially for influenza M and NS. In order for codons to be properly annotated for M and NS, you need to include a gene, transcript, and cds line for each protein. So for M1 and NS1, you need to provide a gene, transcript and cds line. For M2 and NEP you need to provide a gene, transcript, and 2 cds lines. An example gtf and sequences fasta is provided in the folder "SnpEff example files." If you do not annotate these properly, SNPs in the 2nd region of M2 and NEP will have the incorrect amino acid number.
 
 * Once these steps are complete, your genome should be built in a zipped file called snpEffectPredictor.bin
 
