@@ -1,11 +1,15 @@
 #!/usr/bin/env python2
 
-import sys, subprocess, glob, os, shutil, re, importlib
+import sys, subprocess, glob, os, shutil, re, importlib, datetime
 from subprocess import call
+from datetime import datetime
+from time import gmtime, strftime
+time_stamp = strftime("%Y-%m-%d", gmtime())
 
 config_filename = sys.argv[1]
 config = __import__(config_filename)						# imports config_filename as a module
 cfg = config.configuration()								# make cfg an instance of class configuration accessed from the config module
+date_time = str(datetime.now())
 reference_sequence_name = cfg.reference_sequence.split("/")[-1]
 
 file_list = []
@@ -69,7 +73,7 @@ elif cfg.paired_trim == False:
 # perform trimming
 def trim(sample_list):
 	for s in sample_dict:
-		log_filename = s + "/log_file.txt"
+		log_filename = s + "/log_file_" + time_stamp + ".txt"
 		with open(log_filename, "w") as log_file:
 		
 			for value in sample_dict[s]:
@@ -88,7 +92,7 @@ def map(sample_list):
 	if cfg.use_different_reference_for_each_sample == False:
 		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=reference_sequence_name), shell=True, stderr=log_file)
 		for s in sample_dict:
-			log_filename = s + "/log_file.txt"
+			log_filename = s + "/log_file_" + time_stamp + ".txt"
 			with open(log_filename, "a") as log_file:
 
 				# set the trimmed fastq files to use for mapping
@@ -105,7 +109,7 @@ def map(sample_list):
 	elif cfg.use_different_reference_for_each_sample == True:
 		for s in sample_dict:
 			
-			log_filename = s + "/log_file.txt"
+			log_filename = s + "/log_file_" + time_stamp + ".txt"
 			with open(log_filename, "a") as log_file:
 
 				# set the trimmed fastq files to use for mapping
@@ -135,7 +139,7 @@ def remove_duplicate_reads():
 	for s in sample_dict:
 		print "removing duplicate reads for %s using picard" % s
 		
-		log_filename = s + "/log_file.txt"
+		log_filename = s + "/log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 		
 			#convert sam to bam, then sort bam file
@@ -154,7 +158,7 @@ def normalize_coverage():
 	for s in sample_dict:
 		print "normalizing coverage for %s using bbnorm" % s
 		
-		log_filename = s + "/log_file.txt"
+		log_filename = s + "/log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			call("mkdir {s}/coverage_norm_and_duplicate_read_removal".format(s=s), shell=True)
@@ -209,7 +213,7 @@ def normalize_coverage():
 def call_SNPs():
 	for s in sample_dict:
 		
-		log_filename = s + "/log_file.txt"
+		log_filename = s + "/log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			# define sam file based on whether duplicate read removal and coverage normalization are is turned on or off
@@ -326,29 +330,29 @@ def de_novo_assembly():
 	# perform de novo assembly using trinity on the trimmed fastq files
 	for s in sample_dict:
 		
-		log_filename = s + "/log_file.txt"
+		log_filename = s + "/log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
-		# set the trimmed fastq files to use for de novo assembly
-		trimmed_reads = []
+			# set the trimmed fastq files to use for de novo assembly
+			trimmed_reads = []
 			
-		for f in os.listdir(s):
-			if f.endswith(".trimmed.fastq") == True:
-				trimmed = s + "/" + f
-				trimmed_reads.append(trimmed)
-		fastqs_to_assemble = ",".join(trimmed_reads)
+			for f in os.listdir(s):
+				if f.endswith(".trimmed.fastq") == True:
+					trimmed = s + "/" + f
+					trimmed_reads.append(trimmed)
+			fastqs_to_assemble = ",".join(trimmed_reads)
 
-		call("/usr/local/bin/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --single {fastqs_to_assemble} --max_memory 3G --output {s}/trinity_output".format(s=s,fastqs_to_assemble=fastqs_to_assemble), shell=True, stderr=log_file)
+			call("/usr/local/bin/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --single {fastqs_to_assemble} --max_memory 3G --output {s}/trinity_output".format(s=s,fastqs_to_assemble=fastqs_to_assemble), shell=True, stderr=log_file)
 
-		# pipe the output to blastn to return the identity of the contigs
-		call("/usr/local/bin/ncbi-blast-2.6.0+/bin/blastn -db nt -query {s}/trinity_output/Trinity.fasta -out {s}/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
+			# pipe the output to blastn to return the identity of the contigs
+			call("/usr/local/bin/ncbi-blast-2.6.0+/bin/blastn -db nt -query {s}/trinity_output/Trinity.fasta -out {s}/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
 
 
 def de_novo_assemble_mapped_reads():
 	# perform de novo assembly using trinity on the trimmed fastq files
 	for s in sample_dict:
 		
-		log_filename = s + "/log_file.txt"
+		log_filename = s + "/log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			# set the trimmed fastq files to use for de novo assembly
@@ -413,7 +417,7 @@ def de_novo_assemble_mapped_reads():
 def pi_analyses():
 	for s in sample_dict:
 		
-		log_filename = s + "/log_file.txt"
+		log_filename = s + "/log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			if cfg.use_different_reference_for_each_sample == True:
