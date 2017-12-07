@@ -51,7 +51,7 @@ def combine_fastqfiles():
 		call("mkdir {s}".format(s=s), shell=True)
 
 		for file in file_list:
-			if s in file:
+			if s in file.replace("_R2", "") or s in file.replace("_R1", ""):
 				call("cp {file} {s}/{file}".format(s=s, file=file), shell=True)
 
 
@@ -71,7 +71,7 @@ def trim(sample_list):
 	for s in sample_dict:
 		for value in sample_dict[s]:
 			if cfg.paired_trim == False and cfg.remove_adapters == False:
-				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True)
+				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stdout=log_file)
 			if cfg.paired_trim == False and cfg.remove_adapters == True:
 				call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True)
 
