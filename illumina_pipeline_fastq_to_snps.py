@@ -24,7 +24,7 @@ for file in file_list:									# find all reads that are pairs
 		samplename = samplename.replace(".fastq", "")
 
 	elif "R2" in file:
-		samplename = file.replace("_R2", "")		# rename R2 reads to take out the R2_001.fastq
+		samplename = file.replace("_R2", "")		# rename R2 reads to take out the R2_001.fastq		CHANGE THIS BACK 
 		samplename = samplename.replace(".fastq", "")
 
 	else:
@@ -127,7 +127,8 @@ def remove_duplicate_reads():
 		call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True)
 		
 		# run picard
-		call("java -jar /usr/local/bin/picard.jar MarkDuplicates I={s}/{s}.sorted.sam O={s}/{s}.nodups.sam REMOVE_DUPLICATES=true M=file.params.txt".format(s=s), shell=True)
+		call("mkdir coverage_norm_and_duplicate_read_removal".format(), shell=True)
+		call("java -jar /usr/local/bin/picard.jar MarkDuplicates I={s}/{s}.sorted.sam O={s}/coverage_norm_and_duplicate_read_removal/{s}.nodups.sam REMOVE_DUPLICATES=true M=file.params.txt".format(s=s), shell=True)
 		
 		# clean up names and remove the .sorted.sam file
 		call("rm {s}/{s}.sorted.sam; rm {s}/{s}.sam.sorted.bam".format(s=s), shell=True)
@@ -137,6 +138,7 @@ def remove_duplicate_reads():
 def normalize_coverage():
 	for s in sample_dict:
 		print "normalizing coverage for %s using bbnorm" % s
+		call("mkdir coverage_norm_and_duplicate_read_removal".format(), shell=True)
 		
 		deduped = ""
 		original = ""
@@ -149,12 +151,12 @@ def normalize_coverage():
 				original = f
 		if cfg.remove_duplicate_reads == True:
 			sam_file = deduped
-			output_sam_name = s + ".nodups.normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
-			normalized_fastq_name = s + ".nodups.normalized.fastq"
+			output_sam_name = "coverage_norm_and_duplicate_read_removal/" + s + ".nodups.normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
+			normalized_fastq_name = "coverage_norm_and_duplicate_read_removal/"+ s + ".nodups.normalized.fastq"
 		elif cfg.remove_duplicate_reads == False:
 			sam_file = original
-			output_sam_name = s + ".normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
-			normalized_fastq_name = s + ".normalized.fastq"
+			output_sam_name = "coverage_norm_and_duplicate_read_removal/"+ s + ".normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
+			normalized_fastq_name = "coverage_norm_and_duplicate_read_removal/"+ s + ".normalized.fastq"
 
 		call("reformat.sh in={s}/{sam_file} out={s}/{s}.reextracted_from_sam.fastq".format(s=s, sam_file=sam_file), shell=True)	
 	
@@ -190,11 +192,11 @@ def call_SNPs():
 		if cfg.remove_duplicate_reads == False and cfg.normalize_coverage == False:
 			sam_file = s + ".sam"
 		elif cfg.remove_duplicate_reads == True and cfg.normalize_coverage == False:
-			sam_file = s + ".nodups.sam"
+			sam_file = "coverage_norm_and_duplicate_read_removal/"+ s + ".nodups.sam"
 		elif cfg.remove_duplicate_reads == True and cfg.normalize_coverage == True:
-			sam_file = s + ".nodups.normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
+			sam_file = "coverage_norm_and_duplicate_read_removal/"+ s + ".nodups.normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
 		elif cfg.remove_duplicate_reads == False and cfg.normalize_coverage == True:
-			s + ".normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
+			sam_file = "coverage_norm_and_duplicate_read_removal/"+ s + ".normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
 		
 		# define output vcf names
 		if cfg.use_lofreq == True:
@@ -295,9 +297,17 @@ def call_SNPs():
 def de_novo_assembly():
 	# perform de novo assembly using trinity on the trimmed fastq files
 	for s in sample_dict:
-		fastq1 = sample_dict[s][0]+".trimmed.fastq"
-		fastq2 = sample_dict[s][1]+".trimmed.fastq"
-		call("/usr/local/bin/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --single {s}/{fastq1},{s}/{fastq2} --max_memory 3G --output {s}/trinity_output".format(s=s,fastq1=fastq1, fastq2=fastq2), shell=True)
+		
+		# set the trimmed fastq files to use for de novo assembly
+		trimmed_reads = []
+			
+		for f in os.listdir(s):
+			if f.endswith(".trimmed.fastq") == True:
+				trimmed = s + "/" + f
+				trimmed_reads.append(trimmed)
+		fastqs_to_assemble = ",".join(trimmed_reads)
+
+		call("/usr/local/bin/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --single {fastqs_to_assemble} --max_memory 3G --output {s}/trinity_output".format(s=s,fastqs_to_assemble=fastqs_to_assemble), shell=True)
 
 		# pipe the output to blastn to return the identity of the contigs
 		call("/usr/local/bin/ncbi-blast-2.6.0+/bin/blastn -db nt -query {s}/trinity_output/Trinity.fasta -out {s}/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True)
@@ -306,11 +316,22 @@ def de_novo_assembly():
 def de_novo_assemble_mapped_reads():
 	# perform de novo assembly using trinity on the trimmed fastq files
 	for s in sample_dict:
-		fastq1 = sample_dict[s][0]+".trimmed.fastq"
-		fastq2 = sample_dict[s][1]+".trimmed.fastq"
+		
+		# set the trimmed fastq files to use for de novo assembly
+		trimmed_reads = []
+			
+		for f in os.listdir(s):
+			if f.endswith(".trimmed.fastq") == True:
+				trimmed = f
+				trimmed_reads.append(trimmed)
+		fastqs_to_assemble = ",".join(trimmed_reads)
 
 		# cp the original and trimmed fastq files into the new directory, remove the white spaces and replace with _s
-		call("mkdir {s}/trinity_de_novo_assembly_mapped_reads_only; cp {s}/{fastq1} {s}/trinity_de_novo_assembly_mapped_reads_only/{fastq1}.nospaces.fastq; cp {s}/{fastq2} {s}/trinity_de_novo_assembly_mapped_reads_only/{fastq2}.nospaces.fastq".format(s=s, fastq1=fastq1, fastq2=fastq2), shell=True)
+		call("mkdir {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True)
+		
+		for i in range(0, len(trimmed_reads)):
+			fastq = trimmed_reads[i]
+			call("cp {s}/{fastq} {s}/trinity_de_novo_assembly_mapped_reads_only/{fastq}.nospaces.fastq".format(s=s, fastq=fastq), shell=True)
 		call("for f in {s}/trinity_de_novo_assembly_mapped_reads_only/*.fastq; do sed -i '' $'s/\ /\_/g' $f; done".format(s=s), shell=True)
 
 		# redo bowtie mapping and put the white spaces back into the sam file
@@ -324,11 +345,17 @@ def de_novo_assemble_mapped_reads():
 			reference_name = reference_sequence_name
 			reference_sequence = cfg.reference_sequence
 		
+		trimmed_reads_no_spaces = []
+		for i in trimmed_reads: 
+			no_spaces_read = s + "/trinity_de_novo_assembly_mapped_reads_only/" + i + ".nospaces.fastq"
+			trimmed_reads_no_spaces.append(no_spaces_read)
+		fastqs_no_spaces = ",".join(trimmed_reads_no_spaces)
+		
 		call("rm {s}/bowtie_reference_files; rm {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True)
 		call("mkdir {s}/bowtie_reference_files; cp {reference_sequence} {s}/bowtie_reference_files/{reference_name}".format(s=s,reference_sequence=reference_sequence, reference_name=reference_name), shell=True)
 		call("bowtie2-build {s}/bowtie_reference_files/{reference_name} {s}/bowtie_reference_files/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
 		#call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
-		call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {s}/trinity_de_novo_assembly_mapped_reads_only/{fastq1}.nospaces.fastq,{s}/trinity_de_novo_assembly_mapped_reads_only/{fastq2}.nospaces.fastq -S {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.sam --local".format(s=s, fastq1=fastq1, fastq2=fastq2,reference_name=reference_name), shell=True)
+		call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_no_spaces} -S {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.sam --local".format(s=s, fastqs_no_spaces=fastqs_no_spaces,reference_name=reference_name), shell=True)
 
 		# put back the spaces so that trinity can use it
 		call("for f in {s}/trinity_de_novo_assembly_mapped_reads_only/*.sam; do sed -i '' $'s/\_1\:N/\ 1\:N/g' $f; done".format(s=s), shell=True)
@@ -443,16 +470,6 @@ def create_parameter_file():
 
 
 
-def consolidate_files():
-	if cfg.remove_duplicate_reads == True or cfg.normalize_coverage == True:
-		for s in sample_dict:
-			call("cd {s}; mkdir coverage_norm_and_duplicate_read_removal".format(s=s), shell=True)
-			for f in os.listdir(s):
-				if "nodups" in f or "normalized" in f:
-					call("mv {s}/{f} {s}/coverage_norm_and_duplicate_read_removal/{f}".format(f=f, s=s), shell=True)
-
-
-
 # RUN THE ANALYSES
 
 combine_fastqfiles()
@@ -463,8 +480,8 @@ if cfg.trim == True:
 if cfg.map == True:
 	map(sample_list)
 
-#if cfg.remove_duplicate_reads == True:
-	#remove_duplicate_reads()
+if cfg.remove_duplicate_reads == True:
+	remove_duplicate_reads()
 
 if cfg.normalize_coverage == True:
 	normalize_coverage()
@@ -482,5 +499,3 @@ if cfg.de_novo_assembly == True:
 
 if cfg.run_popoolation == True:
 	pi_analyses()
-
-consolidate_files()
