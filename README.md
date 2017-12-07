@@ -62,7 +62,7 @@ Popoolation is used for calculating pi, piN and piS across full genes, genomes o
 
 
 ## Basic usage: ##
-`illumina_pipeline_fastq_to_snps.py`
+`illumina_pipeline_fastq_to_snps.py config`
 
 #### input files
 As this is currently written, the script will run on all of the fastq files that are in your current directory. These files should all be standard fastq files and need to end in .fastq. The program will automatically combine forward and reverse reads that derive from the same sample together into the same folder. The pipeline has been written to allow you to either map all samples to the same reference sequence (as you would want to do for any sort of experimental evolution/infection study) or to map each sample to a unique reference (as you might want to do for clinical samples). The main difference that you need to worry for specifying between these 2 options is in the reference sequence section of the config file (see: Filling in the config file below).
@@ -204,7 +204,7 @@ A folder containing the output files for Trinity when run using all reads as inp
 A folder that contains the output files for Trinity when run using only mapped reads as input. The output contigs are in a file called Trinity.fasta and the restuls from sending those contigs to BLAST are contained in Trinity_BLAST_result.txt.
 
 #### coverage_norm_and_duplicate_read_removal
-This folder will contain all the results of analyses performed on data where duplicate reads have been removed or the coverage has been normalized. This folder will contain the mapping files (sam/bam) and variant call files (vcfs). Files that contain ".nodups" are ones in which duplicate reads were removed. Files that contain ".normalized.`coverage_value`x" are ones in which coverage was normalized to an average coverage of `coverage_value`. Output files that contain ".nodups.normalized.`coverage_value`x" are ones that had both duplicates removed, and then coverage normalized afterwards. Doing both is usually unnecessary, as often removing duplicate reads results in much less and more even coverage. 
+This folder will contain all the results of analyses performed on data where duplicate reads have been removed or the coverage has been normalized. This folder will contain the mapping files (sam/bam) and variant call files (vcfs). Files that contain ".nodups" are ones in which duplicate reads were removed. Files that contain ".normalized.`coverage_value`x" are ones in which coverage was normalized to an average coverage of `coverage_value`. Output files that contain ".nodups.normalized.`coverage_value`x" are ones that had both duplicates removed, and then coverage normalized afterwards. Doing both is usually unnecessary, as often removing duplicate reads results in much less and more even coverage.
 
 #### sample.params
 a parameters file containing a summary of the commands you specified
