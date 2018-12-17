@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import sys, subprocess, glob, os, shutil, re, importlib, datetime
 from subprocess import call
@@ -22,17 +22,24 @@ reference_list = []
 for file in glob.glob("*.fastq"):						# glob will find instances of all files ending in .fastq as shell would
 	file_list.append(file)
 
+for file in glob.glob("*.fastq.gz"):						# glob will find instances of all files ending in .fastq.gz as shell would
+	file_list.append(file)
+
+#### BEFORE I STOP AND SAVE THIS, MAKE SURE THAT I CHANGE THIS BACK TO JUST _R1 AND _R2
 for file in file_list:									# find all reads that are pairs
 	if "R1" in file:
 		samplename = file.replace("_R1", "")		# rename R1 reads to take out the R1_001.fastq
+		samplename = samplename.replace(".fastq.gz", "")
 		samplename = samplename.replace(".fastq", "")
 
 	elif "R2" in file:
 		samplename = file.replace("_R2", "")		# rename R2 reads to take out the R2_001.fastq		CHANGE THIS BACK 
+		samplename = samplename.replace(".fastq.gz", "")
 		samplename = samplename.replace(".fastq", "")
 
 	else:
 		samplename=file									# if there are only nonpaired reads, just keep the same name
+		samplename = samplename.replace(".fastq.gz", "")
 		samplename = samplename.replace(".fastq", "")	
 
 	sample_list.append(samplename)
@@ -45,6 +52,12 @@ for file in file_list:									# find all reads that are pairs
 		sample_dict[samplename] = [file]
 
 sample_list = list(set(sample_list))					# keep only unique list entries
+
+def write_log_file():
+	for s in sample_dict:
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
+		with open(log_filename, "w") as log_file:
+			log_file.write("")
 
 
 # combine R1 and R2 fastq files and move into directories based on their sample name; if using different references for each mapping, this will also move each reference sequence into the sample folder
@@ -73,14 +86,16 @@ elif cfg.paired_trim == False:
 # perform trimming
 def trim(sample_list):
 	for s in sample_dict:
-		log_filename = s + "/log_file_" + time_stamp + ".txt"
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "w") as log_file:
 		
 			for value in sample_dict[s]:
+				new_name = value.replace(".fastq.gz", "")
+				new_name = new_name.replace(".fastq","")
 				if cfg.paired_trim == False and cfg.remove_adapters == False:
-					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
+					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{new_name}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
 				if cfg.paired_trim == False and cfg.remove_adapters == True:
-					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{value}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
+					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{new_name}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
 
 				elif cfg.paired_trim == True:
 					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
@@ -90,9 +105,11 @@ def trim(sample_list):
 def map(sample_list):
 
 	if cfg.use_different_reference_for_each_sample == False:
-		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=reference_sequence_name), shell=True, stderr=log_file)
+		print("generating reference sequence with bowtie2")
+		call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=reference_sequence_name), shell=True)
+		
 		for s in sample_dict:
-			log_filename = s + "/log_file_" + time_stamp + ".txt"
+			log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 			with open(log_filename, "a") as log_file:
 
 				# set the trimmed fastq files to use for mapping
@@ -103,13 +120,16 @@ def map(sample_list):
 						trimmed_reads.append(trimmed)
 				fastqs_to_map = ",".join(trimmed_reads)
 
+				print("now mapping %s" % s)
 				call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s,fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
+				call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True, stderr=log_file)
+				call("java -Xmx4g -jar /usr/local/bin/BAMStats-1.25/BAMStats-1.25.jar -i {s}/{s}.sorted.sam > {s}/{s}.coverage_stats.txt".format(s=s), shell=True, stderr=log_file)
 				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 	elif cfg.use_different_reference_for_each_sample == True:
 		for s in sample_dict:
 			
-			log_filename = s + "/log_file_" + time_stamp + ".txt"
+			log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 			with open(log_filename, "a") as log_file:
 
 				# set the trimmed fastq files to use for mapping
@@ -125,21 +145,23 @@ def map(sample_list):
 					if file.endswith(".fasta") or file.endswith(".fa"):
 						reference_name = file
 				
-				print "now mapping %s to %s" % s % reference_name
+				print("now mapping %s" % s)
 				call("rm {s}/bowtie_reference_files".format(s=s), shell=True)
 				call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True, stderr=log_file)
 				call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
 			
 				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True, stderr=log_file)
+				call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True, stderr=log_file)
+				call("java -Xmx4g -jar /usr/local/bin/BAMStats-1.25/BAMStats-1.25.jar -i {s}/{s}.sorted.sam > {s}/{s}.coverage_stats.txt".format(s=s), shell=True, stderr=log_file)
 				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 
 # perform duplicate read removal with picard
 def remove_duplicate_reads():
 	for s in sample_dict:
-		print "removing duplicate reads for %s using picard" % s
+		print("removing duplicate reads for %s using picard" % s)
 		
-		log_filename = s + "/log_file_" + time_stamp + ".txt"
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 		
 			#convert sam to bam, then sort bam file
@@ -156,9 +178,9 @@ def remove_duplicate_reads():
 
 def normalize_coverage():
 	for s in sample_dict:
-		print "normalizing coverage for %s using bbnorm" % s
+		print("normalizing coverage for %s using bbnorm" % s)
 		
-		log_filename = s + "/log_file_" + time_stamp + ".txt"
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			call("mkdir {s}/coverage_norm_and_duplicate_read_removal".format(s=s), shell=True)
@@ -213,7 +235,7 @@ def normalize_coverage():
 def call_SNPs():
 	for s in sample_dict:
 		
-		log_filename = s + "/log_file_" + time_stamp + ".txt"
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			# define sam file based on whether duplicate read removal and coverage normalization are is turned on or off
@@ -266,7 +288,7 @@ def call_SNPs():
 						reference_sequence = file
 
 				if cfg.use_lofreq == True:
-					print "now calling SNPs on %s using lofreq" % s
+					print("now calling SNPs on %s using lofreq" % s)
 					
 					call("lofreq call -f {s}/{reference_sequence} -o {s}/{vcf_name} {s}/{sam_file}.sorted.bam".format(s=s, sam_file=sam_file, vcf_name=vcf_name, reference_sequence=reference_sequence), shell=True, stderr=log_file)
 					call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {vcf_name} -o {vcf_name}.filtered.vcf".format(s=s, vcf_name=vcf_name, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
@@ -275,7 +297,7 @@ def call_SNPs():
 						call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name}.filtered.vcf > {s}/{annotated_name}".format(snpEff_ref_name=snpEff_ref_name,s=s,vcf_name=vcf_name, annotated_name=annotated_name, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
 
 				if cfg.use_varscan == True:
-					print "now calling SNPs on %s using varscan" % s
+					print("now calling SNPs on %s using varscan" % s)
 					
 					call("samtools mpileup -d 1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {s}/{reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=reference_sequence), shell=True, stderr=log_file)
 					call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
@@ -288,16 +310,16 @@ def call_SNPs():
 			elif cfg.use_different_reference_for_each_sample == False:
 				# call variants with lofreq and filter them
 				if cfg.use_lofreq == True:
-					print "now calling SNPs on %s using lofreq" % s
+					print("now calling SNPs on %s using lofreq" % s)
 					
-					call("lofreq call -f {reference_sequence} -o {s}/{vcf_name} {sam_file}.sorted.bam".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
+					call("lofreq call -f {reference_sequence} -o {s}/{vcf_name} {s}/{sam_file}.sorted.bam".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
 					call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {s}/{vcf_name} -o {s}/{vcf_name}.filtered.vcf".format(s=s, vcf_name=vcf_name, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
 
 					if cfg.annotate_aa_changes == True:
 						call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(snpEff_ref_name=snpEff_ref_name,s=s,vcf_name=vcf_name, annotated_name=annotated_name, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
 
 				if cfg.use_varscan == True:
-					print "now calling SNPs on %s using varscan" % s
+					print("now calling SNPs on %s using varscan" % s)
 					
 					call("samtools mpileup -d1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
 					call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
@@ -329,8 +351,9 @@ def call_SNPs():
 def de_novo_assembly():
 	# perform de novo assembly using trinity on the trimmed fastq files
 	for s in sample_dict:
+		print("now performing de novo assembly on %s using Trinity" % s)
 		
-		log_filename = s + "/log_file_" + time_stamp + ".txt"
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			# set the trimmed fastq files to use for de novo assembly
@@ -342,7 +365,8 @@ def de_novo_assembly():
 					trimmed_reads.append(trimmed)
 			fastqs_to_assemble = ",".join(trimmed_reads)
 
-			call("/usr/local/bin/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --single {fastqs_to_assemble} --max_memory 3G --output {s}/trinity_output".format(s=s,fastqs_to_assemble=fastqs_to_assemble), shell=True, stderr=log_file)
+			#call("mkdir {s}/trinity_output".format(s=s), shell=True)
+			call("Trinity --seqType fq --single {fastqs_to_assemble} --output {s}/trinity_output".format(s=s,fastqs_to_assemble=fastqs_to_assemble), shell=True, stderr=log_file)
 
 			# pipe the output to blastn to return the identity of the contigs
 			call("/usr/local/bin/ncbi-blast-2.6.0+/bin/blastn -db nt -query {s}/trinity_output/Trinity.fasta -out {s}/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
@@ -351,8 +375,9 @@ def de_novo_assembly():
 def de_novo_assemble_mapped_reads():
 	# perform de novo assembly using trinity on the trimmed fastq files
 	for s in sample_dict:
+		print("now performing de novo assembly on mapped reads from %s using Trinity" % s)
 		
-		log_filename = s + "/log_file_" + time_stamp + ".txt"
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			# set the trimmed fastq files to use for de novo assembly
@@ -365,6 +390,7 @@ def de_novo_assemble_mapped_reads():
 			fastqs_to_assemble = ",".join(trimmed_reads)
 
 			# cp the original and trimmed fastq files into the new directory, remove the white spaces and replace with _s
+			print("removing white spaces from fastq files - a Trinity requirement")
 			call("mkdir {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True, stderr=log_file)
 		
 			for i in range(0, len(trimmed_reads)):
@@ -385,10 +411,11 @@ def de_novo_assemble_mapped_reads():
 		
 			trimmed_reads_no_spaces = []
 			for i in trimmed_reads: 
-				no_spaces_read = s + "/trinity_de_novo_assembly_mapped_reads_only/" + i + ".nospaces.fastq"
-				trimmed_reads_no_spaces.append(no_spaces_read)
+				no_spaces_reads = s + "/trinity_de_novo_assembly_mapped_reads_only/" + i + ".nospaces.fastq"
+				trimmed_reads_no_spaces.append(no_spaces_reads)
 			fastqs_no_spaces = ",".join(trimmed_reads_no_spaces)
 		
+			print("rebuild bowtie reference sequence")
 			call("rm {s}/bowtie_reference_files; rm {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True, stderr=log_file)
 			call("mkdir {s}/bowtie_reference_files; cp {reference_sequence} {s}/bowtie_reference_files/{reference_name}".format(s=s,reference_sequence=reference_sequence, reference_name=reference_name), shell=True, stderr=log_file)
 			call("bowtie2-build {s}/bowtie_reference_files/{reference_name} {s}/bowtie_reference_files/{reference_name}".format(s=s, reference_name=reference_name), shell=True, stderr=log_file)
@@ -396,19 +423,22 @@ def de_novo_assemble_mapped_reads():
 			call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_no_spaces} -S {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.sam --local".format(s=s, fastqs_no_spaces=fastqs_no_spaces,reference_name=reference_name), shell=True, stderr=log_file)
 
 			# put back the spaces so that trinity can use it
+			print("add spaces back into fastq files for bowtie")
 			call("for f in {s}/trinity_de_novo_assembly_mapped_reads_only/*.sam; do sed -i '' $'s/\_1\:N/\ 1\:N/g' $f; done".format(s=s), shell=True, stderr=log_file)
 			call("for f in {s}/trinity_de_novo_assembly_mapped_reads_only/*.sam; do sed -i '' $'s/\_2\:N/\ 2\:N/g' $f; done".format(s=s), shell=True, stderr=log_file)
 
 			# split sam file into forward and reverse and then extract fastqs
+			print("split into forward and reverse reads and pull out fastq files")
 			call("splitsam.sh {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.sam {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.sam {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.sam {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.unmapped.sam".format(s=s), shell=True, stderr=log_file)
 			call("reformat.sh in={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.sam out={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.fastq ow=t".format(s=s), shell=True, stderr=log_file)
 			call("reformat.sh in={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.sam out={s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.fastq ow=t".format(s=s), shell=True, stderr=log_file)
 
 			# perform de novo assembly
-			call("/usr/local/bin/trinityrnaseq-Trinity-v2.4.0/Trinity --seqType fq --single {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.fastq,{s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.fastq --max_memory 3G --output {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True, stderr=log_file)
+			print("use Trinity for de novo assembly of %s" % s)
+			call("Trinity --seqType fq --single {s}/trinity_de_novo_assembly_mapped_reads_only/{s}.forward.fastq,{s}/trinity_de_novo_assembly_mapped_reads_only/{s}.reverse.fastq --max_memory 3G --output {s}/trinity_de_novo_assembly_mapped_reads_only".format(s=s), shell=True, stderr=log_file)
 
 			# pipe the output to blastn to return the identity of the contigs
-			print "now BLAST searching contigs from Trinity assembly of mapped reads from %s" % s
+			print("now BLAST searching contigs from Trinity assembly of mapped reads from %s" % s)
 			call("/usr/local/bin/ncbi-blast-2.6.0+/bin/blastn -db nt -query {s}/trinity_de_novo_assembly_mapped_reads_only/Trinity.fasta -out {s}/trinity_de_novo_assembly_mapped_reads_only/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
 
 
@@ -417,7 +447,7 @@ def de_novo_assemble_mapped_reads():
 def pi_analyses():
 	for s in sample_dict:
 		
-		log_filename = s + "/log_file_" + time_stamp + ".txt"
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "a") as log_file:
 
 			if cfg.use_different_reference_for_each_sample == True:
@@ -432,14 +462,14 @@ def pi_analyses():
 					gtf_name = gtf_name.replace(".fa", "")
 
 
-				print gtf_name
+				print(gtf_name)
 				if "_H5_partial" in gtf_name:
 					gtf_name = gtf_name.replace("_H5_partial","")
 				if "full_genome" in gtf_name:
 					gtf_name = gtf_name.replace("full_genome","")
 				if "_mixed" in gtf_name:
 					gtf_name = gtf_name.replace("_mixed","")
-				print gtf_name
+				print(gtf_name)
 
 
 			elif cfg.use_different_reference_for_each_sample == False:
@@ -512,8 +542,10 @@ def create_parameter_file():
 
 
 # RUN THE ANALYSES
+#write_log_file()
 
-combine_fastqfiles()
+if cfg.combine_fastqs == True: 
+	combine_fastqfiles()
 
 if cfg.trim == True:
 	trim(sample_list)
