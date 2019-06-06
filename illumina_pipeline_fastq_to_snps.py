@@ -25,7 +25,6 @@ for file in glob.glob("*.fastq"):						# glob will find instances of all files e
 for file in glob.glob("*.fastq.gz"):						# glob will find instances of all files ending in .fastq.gz as shell would
 	file_list.append(file)
 
-#### BEFORE I STOP AND SAVE THIS, MAKE SURE THAT I CHANGE THIS BACK TO JUST _R1 AND _R2
 for file in file_list:									# find all reads that are pairs
 	if "R1" in file:
 		samplename = file.replace("_R1", "")		# rename R1 reads to take out the R1_001.fastq
@@ -97,8 +96,11 @@ def trim(sample_list):
 				if cfg.paired_trim == False and cfg.remove_adapters == True:
 					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{new_name}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
 
-				elif cfg.paired_trim == True:
-					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
+				elif cfg.paired_trim == True and cfg.remove_adapters == False:
+					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
+
+				elif cfg.paired_trim == True and cfg.remove_adapters == True:
+					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
 
 
 # perform mapping
@@ -115,13 +117,40 @@ def map(sample_list):
 				# set the trimmed fastq files to use for mapping
 				trimmed_reads = []
 				for f in os.listdir(s):
-					if f.endswith(".trimmed.fastq") == True:
+					if ".trimmed" in f and f.endswith(".fastq"):
 						trimmed = s + "/" + f
 						trimmed_reads.append(trimmed)
 				fastqs_to_map = ",".join(trimmed_reads)
 
 				print("now mapping %s" % s)
-				call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s,fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
+				
+				if  cfg.paired_trim == False: 
+					call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s,fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
+				
+				elif  cfg.paired_trim == True:
+					# define input fastqs for paired trimming
+					paired1 = []
+					paired2 = []
+					unpaired1 = []
+					unpaired2 = []
+					
+					for f in trimmed_reads:
+						
+						if f.endswith("_1P.fastq"):
+							paired1.append(f)
+						elif f.endswith("_2P.fastq"):
+							paired2.append(f)
+						elif f.endswith("_1U.fastq"):
+							unpaired1.append(f)
+						elif f.endswith("_2U.fastq"):
+							unpaired2.append(f)
+					
+					paired1 = ",".join(paired1)
+					paired2 = ",".join(paired2)
+					unpaired = ",".join(unpaired1 + unpaired2)
+						
+					call("bowtie2 -x {reference_sequence} -1 {paired1} -2 {paired2} -U {unpaired} -S {s}/{s}.sam --local".format(s=s,paired1=paired1,paired2=paired2,unpaired=unpaired, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
+
 				call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True, stderr=log_file)
 				call("java -Xmx4g -jar /usr/local/bin/BAMStats-1.25/BAMStats-1.25.jar -i {s}/{s}.sorted.sam > {s}/{s}.coverage_stats.txt".format(s=s), shell=True, stderr=log_file)
 				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
@@ -134,9 +163,8 @@ def map(sample_list):
 
 				# set the trimmed fastq files to use for mapping
 				trimmed_reads = []
-			
 				for f in os.listdir(s):
-					if f.endswith(".trimmed.fastq") == True:
+					if ".trimmed" in f and f.endswith(".fastq"):
 						trimmed = s + "/" + f
 						trimmed_reads.append(trimmed)
 				fastqs_to_map = ",".join(trimmed_reads)
@@ -146,11 +174,38 @@ def map(sample_list):
 						reference_name = file
 				
 				print("now mapping %s" % s)
+				
 				call("rm {s}/bowtie_reference_files".format(s=s), shell=True)
 				call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True, stderr=log_file)
 				call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
-			
-				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True, stderr=log_file)
+				
+				if  cfg.paired_trim == False: 
+					call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{s}.sam --local".format(s=s, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True, stderr=log_file)
+
+				elif  cfg.paired_trim == True:
+					# define input fastqs for paired trimming
+					paired1 = []
+					paired2 = []
+					unpaired1 = []
+					unpaired2 = []
+					
+					for f in trimmed_reads:
+						
+						if f.endswith("_1P.fastq"):
+							paired1.append(f)
+						elif f.endswith("_2P.fastq"):
+							paired2.append(f)
+						elif f.endswith("_1U.fastq"):
+							unpaired1.append(f)
+						elif f.endswith("_2U.fastq"):
+							unpaired2.append(f)
+					
+					paired1 = ",".join(paired1)
+					paired2 = ",".join(paired2)
+					unpaired = ",".join(unpaired1 + unpaired2)
+
+					call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -1 {paired1} -2 {paired2} -U {unpaired} -S {s}/{s}.sam --local".format(s=s,paired1=paired1,paired2=paired2,unpaired=unpaired, reference_name=reference_name), shell=True, stderr=log_file)
+
 				call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True, stderr=log_file)
 				call("java -Xmx4g -jar /usr/local/bin/BAMStats-1.25/BAMStats-1.25.jar -i {s}/{s}.sorted.sam > {s}/{s}.coverage_stats.txt".format(s=s), shell=True, stderr=log_file)
 				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
@@ -299,7 +354,7 @@ def call_SNPs():
 				if cfg.use_varscan == True:
 					print("now calling SNPs on %s using varscan" % s)
 					
-					call("samtools mpileup -d 1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {s}/{reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=reference_sequence), shell=True, stderr=log_file)
+					call("samtools mpileup -A -d 1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {s}/{reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=reference_sequence), shell=True, stderr=log_file)
 					call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
 
 					if cfg.annotate_aa_changes == True:
@@ -321,7 +376,7 @@ def call_SNPs():
 				if cfg.use_varscan == True:
 					print("now calling SNPs on %s using varscan" % s)
 					
-					call("samtools mpileup -d1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
+					call("samtools mpileup -A -d1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
 					call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
 
 				if cfg.annotate_aa_changes == True:
@@ -492,7 +547,7 @@ def pi_analyses():
 				
 			call("mkdir {s}/popoolation_analyses; cp {s}/{sam_file} {s}/popoolation_analyses/{sam_file}".format(s=s, sam_file=sam_file, base_name=base_name), shell=True, stderr=log_file)
 			call("samtools view -bS {s}/popoolation_analyses/{sam_file} > {s}/popoolation_analyses/{base_name}.bam; samtools sort {s}/popoolation_analyses/{base_name}.bam > {s}/popoolation_analyses/{base_name}.sorted.bam".format(s=s, sam_file=sam_file, base_name=base_name), shell=True, stderr=log_file)
-			call("samtools mpileup -d 1000000 {s}/popoolation_analyses/{base_name}.sorted.bam > {s}/popoolation_analyses/{base_name}.pileup".format(s=s, base_name=base_name), shell=True, stderr=log_file)
+			call("samtools mpileup -d 1000000 -A {s}/popoolation_analyses/{base_name}.sorted.bam > {s}/popoolation_analyses/{base_name}.pileup".format(s=s, base_name=base_name), shell=True, stderr=log_file)
 
 
 			if cfg.calculate_genewise_pi == True:
