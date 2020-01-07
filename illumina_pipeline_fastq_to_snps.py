@@ -71,19 +71,39 @@ def combine_fastqfiles():
 				call("cp {file} {s}/{file}".format(s=s, file=file), shell=True)
 
 
+# remove human reads by mapping to a human reference genome and then collecting the unmapped reads 
+def remove_human_reads(sample_list):
+	for s in sample_dict:
+		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
+		call("mkdir {s}/raw-fastqs-with-human-reads".format(s=s),shell=True)
+		
+		with open(log_filename, "w") as log_file:
 
-# set the ending for trimmed file names depending on whether a paired or unpaired trim was performed
-if cfg.paired_trim == True:
-	trimmed_forward_file_ending = "_1P.fastq"
-	trimmed_reverse_file_ending = "_2P.fastq"
-elif cfg.paired_trim == False:
-	trimmed_forward_file_ending = ".trimmed.fastq"
-	trimmed_reverse_file_ending = ".trimmed.fastq"
+			for fastq in sample_dict[s]:
+				with_human_fastq_name = fastq.replace(".fastq",".with-human-reads.fastq")
+				human_removed_fastq_name = fastq.replace(".gz","")
 
-
-
+				print("removing human reads from %s" % fastq)
+				# move raw fastq files into new directory and rename; remove human reads and place new, human-filtered reads into same directory
+				call("mv {s}/{fastq} {s}/raw-fastqs-with-human-reads/{with_human_fastq_name}".format(fastq=fastq,s=s,with_human_fastq_name=with_human_fastq_name), shell=True)
+				call("bowtie2 -x {human_reference_sequence} -U {s}/raw-fastqs-with-human-reads/{with_human_fastq_name} -S {s}/raw-fastqs-with-human-reads/{s}.human.sam --un {s}/{human_removed_fastq_name} --local".format(s=s,fastq=fastq, human_reference_sequence=cfg.human_reference_sequence,with_human_fastq_name=with_human_fastq_name,human_removed_fastq_name=human_removed_fastq_name), shell=True, stderr=log_file)
+				call("rm {s}/raw-fastqs-with-human-reads/{s}.human.sam".format(s=s), shell=True)
+				
+				if ".gz" in fastq: 
+					call("gzip {s}/{human_removed_fastq_name}".format(human_removed_fastq_name=human_removed_fastq_name, s=s), shell=True)
+					
+												
 # perform trimming
 def trim(sample_list):
+
+	# set the ending for trimmed file names depending on whether a paired or unpaired trim was performed
+	if cfg.paired_trim == True:
+		trimmed_forward_file_ending = "_1P.fastq"
+		trimmed_reverse_file_ending = "_2P.fastq"
+	elif cfg.paired_trim == False:
+		trimmed_forward_file_ending = ".trimmed.fastq"
+		trimmed_reverse_file_ending = ".trimmed.fastq"
+
 	for s in sample_dict:
 		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
 		with open(log_filename, "w") as log_file:
@@ -601,6 +621,9 @@ def create_parameter_file():
 
 if cfg.combine_fastqs == True: 
 	combine_fastqfiles()
+	
+if cfg.remove_human_reads == True:
+	remove_human_reads(sample_list)
 
 if cfg.trim == True:
 	trim(sample_list)

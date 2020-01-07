@@ -8,9 +8,11 @@ class configuration(object):
 ####### SPECIFY WHICH TASKS YOU WANT TO DO HERE #########################################
 
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
-		self.trim = True
+		self.combine_fastqs = False  # calls combine fastq files into a folder and put results of analyses into that folder 
+		self.remove_human_reads = False
+		self.trim = False
 		self.map = True
-		self.call_snps = True
+		self.call_snps = False
 		self.annotate_aa_changes = False
 		self.de_novo_assembly = False
 		self.de_novo_assemble_mapped_reads = False
@@ -40,11 +42,16 @@ class configuration(object):
 
 ####### SET/ALTER PARAMETERS ############################################################
 
+####### SET HUMAN REFERENCE GENOME TO USE TO REMOVE HUMAN READS ##########################
+### Fill these out if self.remove_human_reads = True
+
+		self.human_reference_sequence = "/Volumes/gradschool-and-postdoc-backups/post-doc/stored_files_too_big_for_laptop/Mumps/sequence_data/human-reference-genome/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index"
+
 ####### SET TRIMMING PARAMETERS #########################################################
 ### Fill these out if self.trim = True
 
 		# remove illumina adapters from sequence ends
-		self.remove_adapters = False
+		self.remove_adapters = True
 		self.adapters_fasta = "/usr/local/bin/Trimmomatic-0.36/Nextera_XT_adapter.fa"
 
 		# trim the reads as paired reads or as unpaired; set to True to run Trimmomatic in paired mode and False to run in unpaired mode
@@ -59,15 +66,14 @@ class configuration(object):
 		# trim reads using a quality score threshold of this (for Q30, set to 30, etc...)
 		self.trim_qscore = 30
 
-
 ###### SPECIFY REFERENCE SEQUENCE AND MAPPING QUALITY ########################################################
 ### Fill these out if self.map = True
 
 		# here, put the full path for the reference sequence you wish to use for mapping. You can figure out the full path by dragging and dropping the file into the terminal, and then copying that file path into here
-		self.reference_sequence = "/Volumes/Seagate_Backup_Plus_Drive/work_computer_hard_backups/Documents/McCrone_et_al/full_genome.fasta"
+		self.reference_sequence = "/Volumes/gradschool-and-postdoc-backups/post-doc/stored_files_too_big_for_laptop/Mumps/sequence_data/mumps-seq-library-4/mapped-to-own-consensus/45/MuVs_Massachusetts.USA_42.16_1_G.fasta"
 
 		# If, instead of mapping everything to the same reference you would like to map sample to a different reference, then specify True here. This will also require that the references you wish to use have been placed in the same folder as the trimmed fastq files.
-		self.use_different_reference_for_each_sample = False
+		self.use_different_reference_for_each_sample = True
 
 ####### SET SNP CALLING PARAMETERS ######################################################
 ### Fill these out if self.call_snps = True
