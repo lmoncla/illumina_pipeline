@@ -1,16 +1,16 @@
-# TCF lab pipeline for Illumina sequence data analysis
+# Bioinformatics pipeline for Illumina sequence data analysis
 
 # README #
 
-This repository contains the TCF Illumina sequence data analysis pipeline. This pipeline handles going from raw fastq files that came off the MiSeq to generating variant calls and performing diversity analyses.
+This repository contains an Illumina sequence data analysis pipeline that I developed during PhD in Thomas Friedrich's lab. This pipeline handles going from raw fastq files that came off the MiSeq to generating variant calls and performing diversity analyses.
 
-* TCF Illumina pipeline
+* Illumina pipeline
 * Version 1.0
 * [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
 
 ## How do I get set up? ##
 
-This pipeline is written in Python 2.7. To use, download the python file and config file, fill out the config file, and add to your path.
+This pipeline is written in Python 3.7. To use, download the python file and config file, fill out the config file, and add to your path.
 
 ## Dependencies ##
 
