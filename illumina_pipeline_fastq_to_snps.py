@@ -112,15 +112,15 @@ def trim(sample_list):
 				new_name = value.replace(".fastq.gz", "")
 				new_name = new_name.replace(".fastq","")
 				if cfg.paired_trim == False and cfg.remove_adapters == False:
-					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{new_name}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
+					call("trimmomatic SE {s}/{value} {s}/{new_name}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
 				if cfg.paired_trim == False and cfg.remove_adapters == True:
-					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar SE {s}/{value} {s}/{new_name}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
+					call("trimmomatic SE {s}/{value} {s}/{new_name}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
 
 				elif cfg.paired_trim == True and cfg.remove_adapters == False:
-					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
+					call("trimmomatic PE {s}/{value} {s}/{value} -baseout {s}/{s}.trimmed.fastq SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore), shell=True, stderr=log_file)
 
 				elif cfg.paired_trim == True and cfg.remove_adapters == True:
-					call("java -jar /usr/local/bin/Trimmomatic-0.36/trimmomatic-0.36.jar PE {s}/{value} {s}/{value} -baseout {s}/{s}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
+					call("trimmomatic PE {s}/{value} {s}/{value} -baseout {s}/{s}.trimmed.fastq ILLUMINACLIP:{adapters_fasta}:1:30:10 SLIDINGWINDOW:{window}:{qscore} MINLEN:{MINLEN}".format(s=s, value=value, new_name=new_name, MINLEN=cfg.minlength, window=cfg.window_size,qscore=cfg.trim_qscore, adapters_fasta=cfg.adapters_fasta), shell=True, stderr=log_file)
 
 
 # perform mapping
@@ -173,7 +173,6 @@ def map(sample_list):
 
 				call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True, stderr=log_file)
 				call("java -Xmx4g -jar /usr/local/bin/BAMStats-1.25/BAMStats-1.25.jar -i {s}/{s}.sorted.sam > {s}/{s}.coverage_stats.txt".format(s=s), shell=True, stderr=log_file)
-				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 	elif cfg.use_different_reference_for_each_sample == True:
 		for s in sample_dict:
@@ -227,9 +226,8 @@ def map(sample_list):
 					call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -1 {paired1} -2 {paired2} -U {unpaired} -S {s}/{s}.sam --local".format(s=s,paired1=paired1,paired2=paired2,unpaired=unpaired, reference_name=reference_name), shell=True, stderr=log_file)
 
 				call("samtools view -bS {s}/{s}.sam|samtools sort|samtools view -h > {s}/{s}.sorted.sam".format(s=s), shell=True, stderr=log_file)
-				call("java -Xmx4g -jar /usr/local/bin/BAMStats-1.25/BAMStats-1.25.jar -i {s}/{s}.sorted.sam > {s}/{s}.coverage_stats.txt".format(s=s), shell=True, stderr=log_file)
-				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{s}.sam; rm {s}/mapped.sam".format(s=s, mapping_quality=cfg.mapping_quality_threshold), shell=True)
-
+				call("bamstats -i {s}/{s}.sorted.sam > {s}/{s}.coverage_stats.txt".format(s=s), shell=True, stderr=log_file)
+				
 
 # perform duplicate read removal with picard
 def remove_duplicate_reads():
@@ -244,7 +242,7 @@ def remove_duplicate_reads():
 		
 			# run picard
 			call("mkdir {s}/coverage_norm_and_duplicate_read_removal".format(s=s), shell=True, stderr=log_file)
-			call("java -jar /usr/local/bin/picard.jar MarkDuplicates I={s}/{s}.sorted.sam O={s}/coverage_norm_and_duplicate_read_removal/{s}.nodups.sam REMOVE_DUPLICATES=true M=file.params.txt".format(s=s), shell=True, stderr=log_file)
+			call("picard MarkDuplicates I={s}/{s}.sorted.sam O={s}/coverage_norm_and_duplicate_read_removal/{s}.nodups.sam REMOVE_DUPLICATES=true M=file.params.txt".format(s=s), shell=True, stderr=log_file)
 		
 			# clean up names and remove the .sorted.sam file
 			call("rm {s}/{s}.sorted.sam; rm {s}/{s}.sam.sorted.bam".format(s=s), shell=True, stderr=log_file)
@@ -292,18 +290,12 @@ def normalize_coverage():
 			if cfg.use_different_reference_for_each_sample == False:
 				call("bowtie2-build {reference_sequence} {reference_sequence_name}".format(reference_sequence=cfg.reference_sequence, reference_sequence_name=reference_sequence_name), shell=True, stderr=log_file)
 				call("bowtie2 -x {reference_sequence} -U {fastqs_to_map} -S {s}/{output_sam_name} --local".format(s=s, output_sam_name=output_sam_name, fastqs_to_map=fastqs_to_map, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
-				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{output_sam_name}; rm {s}/mapped.sam".format(s=s, output_sam_name=output_sam_name, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 			elif cfg.use_different_reference_for_each_sample == True:
 				for file in os.listdir(s):
 					if file.endswith(".fasta") or file.endswith(".fa"):
-						reference_name = file
-					#call("rm {s}/bowtie_reference_files".format(s=s), shell=True)
-					#call("bowtie2-build {s}/{reference_name} {s}/{reference_name}".format(s=s, reference_name=reference_name), shell=True)
-					#call("mkdir {s}/bowtie_reference_files; cd {s}/; for f in *.bt2; do mv $f bowtie_reference_files/$f; done".format(s=s), shell=True)
-			
+						reference_name = file			
 				call("bowtie2 -x {s}/bowtie_reference_files/{reference_name} -U {fastqs_to_map} -S {s}/{output_sam_name} --local".format(s=s, output_sam_name=output_sam_name, fastqs_to_map=fastqs_to_map, reference_name=reference_name), shell=True, stderr=log_file)
-				#call("samtools view -h -q {mapping_quality} {s}/mapped.sam > {s}/{output_sam_name}; rm {s}/mapped.sam".format(s=s, output_sam_name=output_sam_name, mapping_quality=cfg.mapping_quality_threshold), shell=True)
 
 
 
@@ -324,15 +316,11 @@ def call_SNPs():
 				sam_file = "coverage_norm_and_duplicate_read_removal/"+ s + ".normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
 		
 			# define output vcf names
-			if cfg.use_lofreq == True:
-				vcf_name = sam_file.replace(".sam", ".lofreq" + str(cfg.snp_frequency) + ".vcf")
-			elif cfg.use_varscan == True:
-				vcf_name = sam_file.replace(".sam", ".varscan" + str(cfg.snp_frequency) + ".vcf")
+			vcf_name = sam_file.replace(".sam", ".varscan" + str(cfg.snp_frequency) + ".vcf")
 			annotated_name = vcf_name.replace(".vcf", ".annotated.vcf")
 				
 			#convert sam to bam, then sort bam file
 			call("samtools view -bS {s}/{sam_file}|samtools sort > {s}/{sam_file}.sorted.bam".format(s=s,sam_file=sam_file), shell=True, stderr=log_file)
-			call("rm {s}/{sam_file}.lofreq.{freq}.vcf; rm {s}/{sam_file}.filtered.{freq}.vcf".format(s=s,sam_file=sam_file,freq=cfg.snp_frequency), shell=True, stderr=log_file)
 
 			# assign names to snpEff_ref_name variable, which will be used for amino acid annotation with snpEff
 			if cfg.use_different_reference_for_each_sample == False:
@@ -362,64 +350,24 @@ def call_SNPs():
 					if file.endswith(".fasta") or file.endswith(".fa"):
 						reference_sequence = file
 
-				if cfg.use_lofreq == True:
-					print("now calling SNPs on %s using lofreq" % s)
+				print("now calling SNPs on %s using varscan" % s)
 					
-					call("lofreq call -f {s}/{reference_sequence} -o {s}/{vcf_name} {s}/{sam_file}.sorted.bam".format(s=s, sam_file=sam_file, vcf_name=vcf_name, reference_sequence=reference_sequence), shell=True, stderr=log_file)
-					call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {vcf_name} -o {vcf_name}.filtered.vcf".format(s=s, vcf_name=vcf_name, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
+				call("samtools mpileup -A -d 1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {s}/{reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=reference_sequence), shell=True, stderr=log_file)
+				call("varscan mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
 
-					if cfg.annotate_aa_changes == True:
-						call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name}.filtered.vcf > {s}/{annotated_name}".format(snpEff_ref_name=snpEff_ref_name,s=s,vcf_name=vcf_name, annotated_name=annotated_name, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
-
-				if cfg.use_varscan == True:
-					print("now calling SNPs on %s using varscan" % s)
-					
-					call("samtools mpileup -A -d 1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {s}/{reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=reference_sequence), shell=True, stderr=log_file)
-					call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
-
-					if cfg.annotate_aa_changes == True:
-						call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(sam_file=sam_file, vcf_name=vcf_name, annotated_name=annotated_name, snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
+				if cfg.annotate_aa_changes == True:
+					call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(sam_file=sam_file, vcf_name=vcf_name, annotated_name=annotated_name, snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
 
 
 			# run SNP calling and amino acid change annotations if samples are all mapped to the same reference
 			elif cfg.use_different_reference_for_each_sample == False:
-				# call variants with lofreq and filter them
-				if cfg.use_lofreq == True:
-					print("now calling SNPs on %s using lofreq" % s)
+				print("now calling SNPs on %s using varscan" % s)
 					
-					call("lofreq call -f {reference_sequence} -o {s}/{vcf_name} {s}/{sam_file}.sorted.bam".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
-					call("lofreq filter --cov-min {min_cov} --snvqual-thresh {snp_qual_threshold} --af-min {snp_frequency} -i {s}/{vcf_name} -o {s}/{vcf_name}.filtered.vcf".format(s=s, vcf_name=vcf_name, min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
-
-					if cfg.annotate_aa_changes == True:
-						call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(snpEff_ref_name=snpEff_ref_name,s=s,vcf_name=vcf_name, annotated_name=annotated_name, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
-
-				if cfg.use_varscan == True:
-					print("now calling SNPs on %s using varscan" % s)
-					
-					call("samtools mpileup -A -d1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
-					call("java -jar /usr/local/bin/VarScan.v2.3.9.jar mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
+				call("samtools mpileup -A -d1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
+				call("varscan mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
 
 				if cfg.annotate_aa_changes == True:
 					call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(snpEff_ref_name=snpEff_ref_name,s=s,vcf_name=vcf_name, annotated_name=annotated_name, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
-
-
-			#call("cd {s}; rm -rf snp_calls; mkdir snp_calls; for f in *.vcf; do mv $f snp_calls/$f; done".format(s=s), shell=True)
-
-	#if cfg.use_lofreq == True and cfg.annotate_aa_changes == True:
-		#call("rm combined.{snp_frequency}.snps.txt; grep -r --include='*.lofreq.annotated.{snp_frequency}.vcf' . * >> combined.lofreq.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'/#/d' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'s/\;/\t/g' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'s/\:/\t/g' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'s/\t*\=/\t/g' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'s/\.fastq.*\.vcf//g' combined.{snp_frequency}.snps.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-
-
-	#if cfg.use_varscan == True and cfg.annotate_aa_changes == True:
-		#call("rm combined.{snp_frequency}.snps.txt; grep -r --include='*.varscan.snps.annotated.{snp_frequency}.vcf' . * >> varscan.snps.{snp_frequency}.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'/Position/d' varscan.snps.{snp_frequency}.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'s/\:/\t/g' varscan.snps.{snp_frequency}.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-		#call("sed -i '' $'s/\.fastq.*\.txt//g' varscan.snps.{snp_frequency}.txt".format(snp_frequency=cfg.snp_frequency), shell=True)
-
 
 
 # perform de novo assembly with Trinity
@@ -444,7 +392,7 @@ def de_novo_assembly():
 			call("Trinity --seqType fq --single {fastqs_to_assemble} --output {s}/trinity_output".format(s=s,fastqs_to_assemble=fastqs_to_assemble), shell=True, stderr=log_file)
 
 			# pipe the output to blastn to return the identity of the contigs
-			call("/usr/local/bin/ncbi-blast-2.6.0+/bin/blastn -db nt -query {s}/trinity_output/Trinity.fasta -out {s}/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
+			call("blastn -db nt -query {s}/trinity_output/Trinity.fasta -out {s}/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
 
 
 def de_novo_assemble_mapped_reads():
@@ -514,80 +462,8 @@ def de_novo_assemble_mapped_reads():
 
 			# pipe the output to blastn to return the identity of the contigs
 			print("now BLAST searching contigs from Trinity assembly of mapped reads from %s" % s)
-			call("/usr/local/bin/ncbi-blast-2.6.0+/bin/blastn -db nt -query {s}/trinity_de_novo_assembly_mapped_reads_only/Trinity.fasta -out {s}/trinity_de_novo_assembly_mapped_reads_only/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
+			call("blastn -db nt -query {s}/trinity_de_novo_assembly_mapped_reads_only/Trinity.fasta -out {s}/trinity_de_novo_assembly_mapped_reads_only/Trinity_BLAST_result.txt -max_target_seqs 10 -outfmt '7 qseqid sseqid pident length evalue stitle qcovhsp qstart qend sstart send' -remote".format(s=s), shell=True, stderr=log_file)
 
-
-
-# calculate pi with popoolation
-def pi_analyses():
-	for s in sample_dict:
-		
-		log_filename = s + "/"+ s + "_log_file_" + time_stamp + ".txt"
-		with open(log_filename, "a") as log_file:
-
-			if cfg.use_different_reference_for_each_sample == True:
-				for file in os.listdir(s):
-					if file.endswith(".fasta") or file.endswith(".fa"):
-						gtf_name = file
-						reference_name = file
-
-				if ".fasta" in gtf_name:
-					gtf_name = gtf_name.replace(".fasta", "")
-				if ".fa" in gtf_name:
-					gtf_name = gtf_name.replace(".fa", "")
-
-
-				print(gtf_name)
-				if "_H5_partial" in gtf_name:
-					gtf_name = gtf_name.replace("_H5_partial","")
-				if "full_genome" in gtf_name:
-					gtf_name = gtf_name.replace("full_genome","")
-				if "_mixed" in gtf_name:
-					gtf_name = gtf_name.replace("_mixed","")
-				print(gtf_name)
-
-
-			elif cfg.use_different_reference_for_each_sample == False:
-				reference_name = cfg.reference_sequence
-				if ".fasta" in reference_name:
-					gtf_name = reference_name.replace(".fasta", "")
-				elif ".fa" in reference_name:
-					gtf_name = reference_name.replace(".fa", "")
-
-			# define sam file based on whether duplicate read removal and coverage normalization are turned on or off
-			if cfg.remove_duplicate_reads == False and cfg.normalize_coverage == False:
-				sam_file = s + ".sam"
-			elif cfg.remove_duplicate_reads == True and cfg.normalize_coverage == False:
-				sam_file = s + ".nodups.sam"
-			elif cfg.remove_duplicate_reads == True and cfg.normalize_coverage == True:
-				sam_file = s + ".nodups.normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
-			elif cfg.remove_duplicate_reads == False and cfg.normalize_coverage == True:
-				s + ".normalized." + str(cfg.coverage_normalization_depth) + "x.sam"
-			base_name = sam_file.replace(".sam", "")
-				
-			call("mkdir {s}/popoolation_analyses; cp {s}/{sam_file} {s}/popoolation_analyses/{sam_file}".format(s=s, sam_file=sam_file, base_name=base_name), shell=True, stderr=log_file)
-			call("samtools view -bS {s}/popoolation_analyses/{sam_file} > {s}/popoolation_analyses/{base_name}.bam; samtools sort {s}/popoolation_analyses/{base_name}.bam > {s}/popoolation_analyses/{base_name}.sorted.bam".format(s=s, sam_file=sam_file, base_name=base_name), shell=True, stderr=log_file)
-			call("samtools mpileup -d 1000000 -A {s}/popoolation_analyses/{base_name}.sorted.bam > {s}/popoolation_analyses/{base_name}.pileup".format(s=s, base_name=base_name), shell=True, stderr=log_file)
-
-
-			if cfg.calculate_genewise_pi == True:
-				call("perl /usr/local/bin/popoolation_1.2.2/Variance-at-position.pl --measure pi --pool-size 500 --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --dissable-corrections --gtf /usr/local/bin/snpEff_latest_core/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{base_name}.pileup --output {s}/popoolation_analyses/{base_name}.pi.txt".format(s=s, base_name=base_name, reference_name=reference_name,gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count,min_quality=cfg.min_quality), shell=True, stderr=log_file)
-
-			if cfg.calculate_genewise_piNpiS == True:
-				call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-at-position.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/nsl_p1.txt --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --dissable-corrections --gtf /usr/local/bin/snpEff_latest_core/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{base_name}.pileup --output {s}/popoolation_analyses/{base_name}.syn-nonsyn.txt".format(s=s, base_name=base_name, reference_name=reference_name, gtf_name=gtf_name, min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality), shell=True, stderr=log_file)
-
-			if cfg.calculate_sliding_window_piNpiS == True:
-				call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-sliding.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/nsl_p1.txt --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --window-size {pi_window_size} --step-size {pi_step_size} --dissable-corrections --gtf /usr/local/bin/snpEff_latest_core/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/{base_name}.pileup --output {s}/popoolation_analyses/{base_name}.sliding.txt".format(s=s, base_name=base_name, min_coverage=cfg.min_coverage,  gtf_name=gtf_name, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality,pi_window_size=cfg.pi_window_size,pi_step_size=cfg.pi_step_size), shell=True, stderr=log_file)
-
-			if cfg.perform_subsampling == True:
-				call("mkdir {s}/popoolation_analyses/subsampled".format(s=s), shell=True)
-				call("perl /usr/local/bin/popoolation_1.2.2/basic-pipeline/subsample-pileup.pl --input {s}/popoolation_analyses/{base_name}.pileup --output {s}/popoolation_analyses/subsampled/{base_name}.{subsample_level}x.pileup --target-coverage {subsample_level} --max-coverage {max_coverage} --min-qual {min_quality} --method withoutreplace --fastq-type illumina".format(s=s,base_name=base_name, subsample_level=cfg.subsample_level,min_coverage=cfg.min_coverage,max_coverage=cfg.max_coverage, min_quality=cfg.min_quality), shell=True, stderr=log_file)
-
-				if cfg.calculate_subsampled_pi == True:
-					call("perl /usr/local/bin/popoolation_1.2.2/Variance-at-position.pl --measure pi --pool-size 500 --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --dissable-corrections --gtf /usr/local/bin/snpEff_latest_core/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/subsampled/{base_name}.{subsample_level}x.pileup --output {s}/popoolation_analyses/subsampled/{base_name}.{subsample_level}x.pi.txt".format(s=s, base_name=base_name, subsample_level=cfg.subsample_level,reference_name=reference_name,gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality), shell=True, stderr=log_file)
-
-				if cfg.calculate_subsampled_piNpiS == True:
-					call("perl /usr/local/bin/popoolation_1.2.2/syn-nonsyn/Syn-nonsyn-at-position.pl --measure pi --pool-size 500 --codon-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/codon-table.txt --nonsyn-length-table /usr/local/bin/popoolation_1.2.2/syn-nonsyn/nsl_p1.txt --min-count {min_count} --min-coverage {min_coverage} --max-coverage {max_coverage} --min-qual {min_quality} --dissable-corrections --gtf /usr/local/bin/snpEff_latest_core/snpEff/data/{gtf_name}/genes.gtf --pileup {s}/popoolation_analyses/subsampled/{base_name}.{subsample_level}x.pileup --output {s}/popoolation_analyses/subsampled/{base_name}.{subsample_level}x.syn-nonsyn.txt".format(s=s, base_name=base_name, subsample_level=cfg.subsample_level,reference_name=reference_name, gtf_name=gtf_name,min_coverage=cfg.min_coverage, max_coverage=cfg.max_coverage,min_count=cfg.min_count, min_quality=cfg.min_quality), shell=True, stderr=log_file)
 
 
 # create an output parameter file
@@ -648,5 +524,3 @@ create_parameter_file()
 if cfg.de_novo_assembly == True:
 	de_novo_assembly()
 
-if cfg.run_popoolation == True:
-	pi_analyses()
