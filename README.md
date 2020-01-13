@@ -21,7 +21,7 @@ This pipeline is written in Python 3.7, but should be compatible with python 2 a
 
 4. Activate the environment: `conda activate illumina-pipeline`
 
-5. `gunzip example-data.zip` or double-click to unzip it. 
+5. `unzip example-data.zip` or double-click to unzip it. 
 
 6. `cd example-data`
 
