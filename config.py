@@ -9,19 +9,19 @@ class configuration(object):
 
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
 		self.combine_fastqs = True  # calls combine fastq files into a folder and put results of analyses into that folder 
-		self.remove_human_reads = False
+		self.remove_human_reads = True
 		self.trim = True
 		self.map = True
-		self.call_snps = True
+		self.call_snps = False
 		self.annotate_aa_changes = False
-		self.de_novo_assembly = True
-		self.de_novo_assemble_mapped_reads = True
+# 		self.de_novo_assembly = True
+# 		self.de_novo_assemble_mapped_reads = True
 
 		# data cleaning tasks: coverage depth normalization with bbnorm and duplicate read removal with picard; these will be implemented upstream of variant calling, such that variant calling will use the de-duplicated or normalized sam/bam file
-		self.remove_duplicate_reads = True
+		self.remove_duplicate_reads = False
 		
 		# using bbnorm from the bbmap software package, normalize coverage across the sam or bam file to a set coverage depth, specified with self.coverage_normalization_depth = DEPTH
-		self.normalize_coverage = True
+		self.normalize_coverage = False
 		self.coverage_normalization_depth = 50
 	
 
@@ -30,14 +30,14 @@ class configuration(object):
 ####### SET HUMAN REFERENCE GENOME TO USE TO REMOVE HUMAN READS ##########################
 ### Fill these out if self.remove_human_reads = True
 
-		self.human_reference_sequence = "/Volumes/gradschool-and-postdoc-backups/post-doc/stored_files_too_big_for_laptop/Mumps/sequence_data/human-reference-genome/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index"
+		self.human_reference_sequence = "../human-reference-genome/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index"
 
 ####### SET TRIMMING PARAMETERS #########################################################
 ### Fill these out if self.trim = True
 
 		# remove illumina adapters from sequence ends
 		self.remove_adapters = True
-		self.adapters_fasta = "/usr/local/bin/Trimmomatic-0.36/Nextera_XT_adapter.fa"
+		self.adapters_fasta = "../Nextera_XT_adapter.fa"
 
 		# trim the reads as paired reads or as unpaired; set to True to run Trimmomatic in paired mode and False to run in unpaired mode
 		self.paired_trim = False
@@ -55,7 +55,7 @@ class configuration(object):
 ### Fill these out if self.map = True
 
 		# here, put the full path for the reference sequence you wish to use for mapping. You can figure out the full path by dragging and dropping the file into the terminal, and then copying that file path into here
-		self.reference_sequence = "MuVs_Massachusetts.USA_42.16_1_G.fasta"
+		self.reference_sequence = "CA04_HA_GQ117044.fa"
 
 		# If, instead of mapping everything to the same reference you would like to map sample to a different reference, then specify True here. This will also require that the references you wish to use have been placed in the same folder as the trimmed fastq files.
 		self.use_different_reference_for_each_sample = False

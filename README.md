@@ -28,10 +28,6 @@ Bowtie2 maps trimmed reads to a reference sequence, producing an output sam file
 http://broadinstitute.github.io/picard/
 Picard is a commonly used software for removing duplicate reads with the MarkDuplicates tool.
 
-#### lofreq  
-http://csb5.github.io/lofreq/
-Lofreq calls variants and filters them based on quality scores, forward/reverse read balance, coverage, frequency, quality, etc..
-
 #### varscan
 http://varscan.sourceforge.net/
 Varscan is another option for a variant caller. Allows variants to be called/filtered based on the same criteria as Lofreq (forward/reverse read balance, coverage, frequency, quality)
@@ -56,11 +52,6 @@ Contigs generated from Trinity assembly are piped to BLAST to return the top 10 
 http://snpeff.sourceforge.net/
 snpEff is used for annotating output vcf files with coding region coordinates and inferring amino acid changes from nucleotide variant calls.
 
-#### popoolation
-https://sourceforge.net/p/popoolation/wiki/Main/
-Popoolation is used for calculating pi, piN and piS across full genes, genomes or in sliding windows.
-
-
 ## Basic usage: ##
 `illumina_pipeline_fastq_to_snps.py config`
 
@@ -79,6 +70,9 @@ This pipeline performs de novo assembly with Trinity, which is a de novo assembl
 You may elect to perform trimming, mapping, SNP calling, duplicate read removal, coverage normalization, de novo assembly and run popoolation using this pipeline. To enable these analyses, simply type "True" (make sure to use a capital T) after the = each option. The config file is divided into 3 basic sections: basic tasks (trimming, mapping, calling and annotating SNPs and de novo assembly), cleaning tasks, which are performed after mapping on sam/bam files (coverage normalization and duplicate read removal), and running popoolation. Specifics are below:
 
 #### Basic tasks
+#### self.remove_human_reads = `True` or `False`
+Sometimes I need to remove human reads from my fastq files as a first step to protect patient privacy. If you select True, this will map to a human reference genome with bowtie 2, and output all of the reads that did not map. It will retain the raw fastq files with human reads in a newly created folder. If you want to run this, you need to set the path to the human reference genome in the config file. Bowtie2 provides pre-compiled human reference genomes that you can download. I was not able to upload mine here, due to github's 100 MB size constraint. I use GR38, which can be downloaded [here](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml). 
+
 #### self.trim = `True` or `False`
 Use Trimmomatic to trim the ends of your reads. This must be done for all raw fastq files. If set to True, fill in the parameters under the "SET TRIMMING PARAMETERS" section.
 

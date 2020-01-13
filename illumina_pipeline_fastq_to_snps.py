@@ -516,11 +516,11 @@ if cfg.normalize_coverage == True:
 if cfg.call_snps == True:
 	call_SNPs()
 
-if cfg.de_novo_assemble_mapped_reads == True:
-	de_novo_assemble_mapped_reads()
+# if cfg.de_novo_assemble_mapped_reads == True:
+# 	de_novo_assemble_mapped_reads()
 
 create_parameter_file()
 
-if cfg.de_novo_assembly == True:
-	de_novo_assembly()
+# if cfg.de_novo_assembly == True:
+# 	de_novo_assembly()
 
