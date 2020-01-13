@@ -16,6 +16,7 @@ This pipeline is written in Python 3.7, but should be compatible with python 2 a
 
 3. Navigate into the `illumina-pipeline` directory and create the conda environment:
 ` cd illumina-pipeline/`
+
 `conda env create -f illumina-pipeline.yml`
 
 4. Activate the environment: `conda activate illumina-pipeline`
@@ -24,7 +25,11 @@ This pipeline is written in Python 3.7, but should be compatible with python 2 a
 
 6. `cd example-data`
 
-7. Fill out config file, following instructions below, and run pipeline on example data with `python ../illumina_pipeline_fastq_to_snps.py config`. As specified when downloaded, the config file will trim, map, and call variants on the example files. These example files are influenza HA sequences from the strain A/California/04/2009, that were grown in cell culture. The reference sequence `CA04_HA_GQ117044.fa` provided in the `example-files` folder can be found on GenBank [here](https://www.ncbi.nlm.nih.gov/nuccore/GQ117044).
+7. Fill out config file, following instructions below, and run pipeline on example data. 
+
+`python ../illumina_pipeline_fastq_to_snps.py config`
+
+As specified when downloaded, the config file will trim, map, and call variants on the example files. These example files are influenza HA sequences from the strain A/California/04/2009, that were grown in cell culture. The reference sequence `CA04_HA_GQ117044.fa` provided in the `example-files` folder can be found on GenBank [here](https://www.ncbi.nlm.nih.gov/nuccore/GQ117044).
 
 ## Basic usage: ##
 
