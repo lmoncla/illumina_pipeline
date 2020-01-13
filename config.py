@@ -9,20 +9,18 @@ class configuration(object):
 
 		# for each of the below (trimming, mapping and calling SNPs), set to true if you want to do it, set to false if you do not. If you set something to false then you do not need to change any of the parameters for the associated analysis
 		self.combine_fastqs = True  # calls combine fastq files into a folder and put results of analyses into that folder 
-		self.remove_human_reads = True
+		self.remove_human_reads = False
 		self.trim = True
 		self.map = True
-		self.call_snps = False
-		self.annotate_aa_changes = False
-# 		self.de_novo_assembly = True
-# 		self.de_novo_assemble_mapped_reads = True
+		self.call_snps = True
+#		self.annotate_aa_changes = False
 
 		# data cleaning tasks: coverage depth normalization with bbnorm and duplicate read removal with picard; these will be implemented upstream of variant calling, such that variant calling will use the de-duplicated or normalized sam/bam file
 		self.remove_duplicate_reads = False
 		
 		# using bbnorm from the bbmap software package, normalize coverage across the sam or bam file to a set coverage depth, specified with self.coverage_normalization_depth = DEPTH
 		self.normalize_coverage = False
-		self.coverage_normalization_depth = 50
+		self.coverage_normalization_depth = 100
 	
 
 ####### SET/ALTER PARAMETERS ############################################################
@@ -30,7 +28,7 @@ class configuration(object):
 ####### SET HUMAN REFERENCE GENOME TO USE TO REMOVE HUMAN READS ##########################
 ### Fill these out if self.remove_human_reads = True
 
-		self.human_reference_sequence = "../human-reference-genome/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index"
+		self.human_reference_sequence = "path_to_human_reference"
 
 ####### SET TRIMMING PARAMETERS #########################################################
 ### Fill these out if self.trim = True

@@ -61,5 +61,5 @@ dependencies:
   - xz=5.2.4=h1de35cc_1001
   - zlib=1.2.11=h0b31af3_1006
   - zstd=1.4.4=he7fca8b_1
-prefix: /Users/lmoncla/anaconda/envs/illumina-pipeline
+prefix: ~/anaconda3/envs/illumina-pipeline
 
