@@ -14,18 +14,17 @@ This pipeline is written in Python 3.7, but should be compatible with python 2 a
 
 2. Clone this repo: `git clone https://github.com/lmoncla/illumina_pipeline.git`
 
-3. Create the conda environment: `conda env create -f illumina-pipeline.yml`
+3. Navigate into the `illumina-pipeline` directory and create the conda environment:
+` cd illumina-pipeline/`
+`conda env create -f illumina-pipeline.yml`
 
 4. Activate the environment: `conda activate illumina-pipeline`
 
-5. Navigate to the `illumina_pipeline` directory.
+5. `gunzip example-data.zip` or double-click to unzip it. 
 
-6. `gunzip example-data.zip`
+6. `cd example-data`
 
-7. `cd example-data.zip`
-
-8. Fill out config file, following instructions below, and run pipeline on example data. 
-
+7. Fill out config file, following instructions below, and run pipeline on example data with `python ../illumina_pipeline_fastq_to_snps.py config`. As specified when downloaded, the config file will trim, map, and call variants on the example files. These example files are influenza HA sequences from the strain A/California/04/2009, that were grown in cell culture. The reference sequence `CA04_HA_GQ117044.fa` provided in the `example-files` folder can be found on GenBank [here](https://www.ncbi.nlm.nih.gov/nuccore/GQ117044).
 
 ## Basic usage: ##
 
@@ -45,7 +44,7 @@ All parameters including values you alter in the various programs, which analyse
 ## Filling in the config file ##
 
 ### SECTION 1: SPECIFY WHICH TASKS YOU WANT TO DO HERE
-You may elect to perform trimming, mapping, SNP calling, duplicate read removal, coverage normalization, and human read removal. To enable these analyses, simply type "True" (make sure to use a capital T) after the = each option. The config file is divided into 3 basic sections: basic tasks (trimming, mapping, calling and annotating SNPs and de novo assembly), cleaning tasks, which are performed after mapping on sam/bam files (coverage normalization and duplicate read removal), and running popoolation. Specifics are below:
+You may elect to perform trimming, mapping, SNP calling, duplicate read removal, coverage normalization, and human read removal. To enable these analyses, simply type "True" (make sure to use a capital T) after the = each option. This pipeline does not automatically call consensus genomes. I usually really like to look at the raw, mapped data, so I usually import these into the trial version of Geneious and call a consensus genome from there (you can do this with the free, trial version). The config file is divided into 3 basic sections: basic tasks (trimming, mapping, calling and annotating SNPs and de novo assembly), cleaning tasks, which are performed after mapping on sam/bam files (coverage normalization and duplicate read removal). Specifics are below:
 
 #### self.remove_human_reads = `True` or `False`
 Sometimes I need to remove human reads from my fastq files as a first step to protect patient privacy. If you select True, this will map to a human reference genome with bowtie 2, and output all of the reads that did not map. It will retain the raw fastq files with human reads in a newly created folder. If you want to run this, you need to set the path to the human reference genome in the config file. Bowtie2 provides pre-compiled human reference genomes that you can download. I was not able to upload mine here, due to github's 100 MB size constraint. I use GR38, which can be downloaded [here](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml). 

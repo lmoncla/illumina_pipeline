@@ -355,8 +355,8 @@ def call_SNPs():
 				call("samtools mpileup -A -d 1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {s}/{reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=reference_sequence), shell=True, stderr=log_file)
 				call("varscan mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
 
-				if cfg.annotate_aa_changes == True:
-					call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(sam_file=sam_file, vcf_name=vcf_name, annotated_name=annotated_name, snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
+# 				if cfg.annotate_aa_changes == True:
+# 					call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(sam_file=sam_file, vcf_name=vcf_name, annotated_name=annotated_name, snpEff_ref_name=snpEff_ref_name,s=s,snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
 
 
 			# run SNP calling and amino acid change annotations if samples are all mapped to the same reference
@@ -366,8 +366,8 @@ def call_SNPs():
 				call("samtools mpileup -A -d1000000 {s}/{sam_file}.sorted.bam > {s}/{sam_file}.pileup -f {reference_sequence}".format(s=s, sam_file=sam_file, reference_sequence=cfg.reference_sequence), shell=True, stderr=log_file)
 				call("varscan mpileup2snp {s}/{sam_file}.pileup --min-coverage {min_cov} --min-avg-qual {snp_qual_threshold} --min-var-freq {snp_frequency} --strand-filter 1 --output-vcf 1 > {s}/{vcf_name}".format(s=s, vcf_name=vcf_name, sam_file=sam_file, snp_frequency=cfg.snp_frequency,min_cov=cfg.min_cov, snp_qual_threshold=cfg.snp_qual_threshold), shell=True, stderr=log_file)
 
-				if cfg.annotate_aa_changes == True:
-					call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(snpEff_ref_name=snpEff_ref_name,s=s,vcf_name=vcf_name, annotated_name=annotated_name, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
+# 				if cfg.annotate_aa_changes == True:
+# 					call("java -jar /usr/local/bin/snpEff_latest_core/snpEff/snpEff.jar {snpEff_ref_name} {s}/{vcf_name} > {s}/{annotated_name}".format(snpEff_ref_name=snpEff_ref_name,s=s,vcf_name=vcf_name, annotated_name=annotated_name, snp_frequency=cfg.snp_frequency), shell=True, stderr=log_file)
 
 
 # perform de novo assembly with Trinity
