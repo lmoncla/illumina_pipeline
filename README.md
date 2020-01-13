@@ -28,12 +28,17 @@ This pipeline is written in Python 3.7, but should be compatible with python 2 a
 
 
 ## Basic usage: ##
+
+From within the directory containing your list of fastq files, run: 
+
 `python ../illumina_pipeline_fastq_to_snps.py config`
 
-#### input files
+Replacing `../illumina_pipeline_fastq_to_snps.py` with the path to that file in your directory system. 
+
+### Input files
 As this is currently written, the script will run on all of the fastq files that are in your current directory. These files should all be standard fastq files and need to end in .fastq or .fastq.gz. The program will automatically combine forward and reverse reads that derive from the same sample together into the same folder. This is determined based on those samples having the same name, but being differentiated by having the `R1` or `R2` designation. The pipeline has been written to allow you to either map all samples to the same reference sequence (as you would want to do for any sort of experimental evolution/infection study) or to map each sample to a unique reference (as you might want to do for clinical samples). The main difference that you need to worry for specifying between these 2 options is in the reference sequence section of the config file (see: Filling in the config file below).
 
-#### the config file
+### The config file
 All parameters including values you alter in the various programs, which analyses you wish to perform, and your reference sequence are specified in the config file. The config.py file contains annotated notes about which fields to fill in and what they are, although you should always consult the manuals for the specific programs you are calling for more specific details about what they do. These arguments will then be passed to `illumina_pipeline_fastq_to_snps.py`, which will incorporate those arguments at the appropriate time in the pipeline. After running, the pipeline will output a log file for each sample, which will contain all of the arguments that you used for the analyses as well as any error messages. The intention for using a config file here is that you shouldn't have to alter the `illumina_pipeline_fastq_to_snps.py` file, and should be able to just alter the `config.py` file. Because you will have an log file, it will let you keep a record of what you ran so that you can directly edit the config.py file and repeat the analyses later if you want.
 
 
@@ -42,7 +47,6 @@ All parameters including values you alter in the various programs, which analyse
 ### SECTION 1: SPECIFY WHICH TASKS YOU WANT TO DO HERE
 You may elect to perform trimming, mapping, SNP calling, duplicate read removal, coverage normalization, and human read removal. To enable these analyses, simply type "True" (make sure to use a capital T) after the = each option. The config file is divided into 3 basic sections: basic tasks (trimming, mapping, calling and annotating SNPs and de novo assembly), cleaning tasks, which are performed after mapping on sam/bam files (coverage normalization and duplicate read removal), and running popoolation. Specifics are below:
 
-#### Basic tasks
 #### self.remove_human_reads = `True` or `False`
 Sometimes I need to remove human reads from my fastq files as a first step to protect patient privacy. If you select True, this will map to a human reference genome with bowtie 2, and output all of the reads that did not map. It will retain the raw fastq files with human reads in a newly created folder. If you want to run this, you need to set the path to the human reference genome in the config file. Bowtie2 provides pre-compiled human reference genomes that you can download. I was not able to upload mine here, due to github's 100 MB size constraint. I use GR38, which can be downloaded [here](http://bowtie-bio.sourceforge.net/bowtie2/manual.shtml). 
 
@@ -55,8 +59,6 @@ Use [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) to map to a
 #### self.call_snps = `True` or `False`
 Use [Varscan](http://varscan.sourceforge.net/) to call SNPs after mapping to a reference sequence. You must map to a reference before calling SNPs, as the input file for SNP calling is output file for mapping. If set to True, fill in the "SET SNP CALLING PARAMETERS" section of the config file.
 
-
-#### Data cleaning tasks
 #### self.remove_duplicate_reads = `True` or `False`
 Use [picard's MarkDuplicates tool](http://broadinstitute.github.io/picard/) to remove duplicate reads. Picard considers reads to be duplicates if they have the exact same 5' start site. In some comparisons with samblaster, picard and dedupe, picard performed the best. Picard improved data reproducibility for within-host influenza data, while samblaster and dedupe resulted in an increase in the number of low-frequency variants called, but did result in consistent calls. Therefore, I have elected to use picard for duplicate read removal in this pipeline. Duplicate read removal will occur after mapping, but before coverage normalization.
 
