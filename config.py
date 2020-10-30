@@ -28,20 +28,20 @@ class configuration(object):
 ####### SET HUMAN REFERENCE GENOME TO USE TO REMOVE HUMAN READS ##########################
 ### Fill these out if self.remove_human_reads = True
 
-		self.human_reference_sequence = "path_to_human_reference"
+		self.human_reference_sequence = "/Volumes/data-backups-post-doc/stored_files_too_big_for_laptop/SFS-ncov-data/seattle-scan-fastq-files/human-reference-genome/GCA_000001405.15_GRCh38_no_alt_analysis_set.fna.bowtie_index"
 
 ####### SET TRIMMING PARAMETERS #########################################################
 ### Fill these out if self.trim = True
 
 		# remove illumina adapters from sequence ends
 		self.remove_adapters = True
-		self.adapters_fasta = "../Nextera_XT_adapter.fa"
+		self.adapters_fasta = "~/src/illumina-pipeline/Nextera_XT_adapter.fa"
 
 		# trim the reads as paired reads or as unpaired; set to True to run Trimmomatic in paired mode and False to run in unpaired mode
 		self.paired_trim = False
 
 		# after trimming, discard reads below this length
-		self.minlength = 100
+		self.minlength = 50
 
 		# during trimming, slide along reads in windows of this size (in base pairs)
 		self.window_size = 5
@@ -53,7 +53,7 @@ class configuration(object):
 ### Fill these out if self.map = True
 
 		# here, put the full path for the reference sequence you wish to use for mapping. You can figure out the full path by dragging and dropping the file into the terminal, and then copying that file path into here
-		self.reference_sequence = "CA04_HA_GQ117044.fa"
+		self.reference_sequence = "sars-cov-2.fasta"
 
 		# If, instead of mapping everything to the same reference you would like to map sample to a different reference, then specify True here. This will also require that the references you wish to use have been placed in the same folder as the trimmed fastq files.
 		self.use_different_reference_for_each_sample = False
@@ -62,13 +62,16 @@ class configuration(object):
 ### Fill these out if self.call_snps = True
 
 		# minimum coverage, i.e., SNPs will not be called at sites that have coverage less than this value
-		self.min_cov = 10
+		self.min_cov = 25
 
 		# set base quality threshold, i.e., SNPs will not be called for bases that have a Qscore below this value
 		self.snp_qual_threshold = 30
 
 		# set SNP frequency cutoff (1% would be specified as 0.01). SNPs present below this frequency will not be reported
 		self.snp_frequency = 0.01
+		
+		# set whether or not you want to implement a strand filter for snv calling; 1 means yes, 0 means no
+		self.strand_filter = 1
 
 
 
